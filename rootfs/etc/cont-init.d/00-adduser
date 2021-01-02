@@ -1,0 +1,17 @@
+#!/usr/bin/with-contenv sh
+
+USER_ID=${USER_ID:-1000}
+GROUP_ID=${GROUP_ID:-1000}
+
+groupmod -o -g "$GROUP_ID" nut
+usermod -o -u "$USER_ID" nut
+
+echo '
+-------------------------------------
+GID/UID
+-------------------------------------'
+echo "
+User uid:    $(id -u nut)
+User gid:    $(id -g nut)
+-------------------------------------
+"

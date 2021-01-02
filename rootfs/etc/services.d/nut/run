@@ -1,0 +1,3 @@
+#!/usr/bin/execlineb -P
+s6-setuidgid nut
+/usr/local/bin/python /opt/nut/nut.py -S
