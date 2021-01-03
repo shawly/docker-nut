@@ -42,7 +42,7 @@ COPY .gitignore qemu-${QEMU_ARCH}-static* /usr/bin/
 ADD ${S6_OVERLAY_RELEASE} /tmp/s6overlay.tar.gz
 
 # Change working dir.
-WORKDIR /tmp
+WORKDIR /nut
 
 # Install deps and build binary.
 RUN \
@@ -65,15 +65,17 @@ RUN \
     mkdir -p /var/log/nut && \
     chown -R nobody:nogroup /var/log/nut && \
   echo "Cloning nut..." && \
-    git clone --depth 1 ${NUT_REPO} /opt/nut && \
-    cd /opt/nut && \
+    git clone --depth 1 ${NUT_REPO} /nut && \
     git checkout ${NUT_BRANCH} && \
-    chown -R nut:nut /opt/nut && \
+    chown -R nut:nut /nut && \
   echo "Installing python packages..." && \
     pip3 install --no-cache -r requirements.txt && \
   echo "Removing build dependencies..." && \
     apt-get autoremove -y --purge \
       git \
+      libusb-dev \
+      libssl-dev \
+      libcurl4-openssl-dev \
       gcc && \
     apt-get -y autoclean && \
   echo "Cleaning up temp directory..." && \
@@ -83,11 +85,8 @@ RUN \
 # Add files.
 COPY rootfs/ /
 
-# Change working dir.
-WORKDIR /opt/nut
-
 # Define mountable directories.
-VOLUME ["/games", "/opt/nut/conf"]
+VOLUME ["/games", "/nut/conf"]
 
 # Expose ports.
 EXPOSE 9000
