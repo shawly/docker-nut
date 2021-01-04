@@ -1,0 +1,19 @@
+#!/usr/bin/with-contenv sh
+
+echo '
+-------------------------------------
+Checking conf folder...
+-------------------------------------'
+if [ ! -f "/nut/conf/nut.default.conf" ]; then
+  echo "nut.default.conf not found! Copying..."
+  cp -v /nut/conf_template/nut.default.conf /nut/conf/nut.default.conf
+fi
+
+if [ ! -f "/nut/conf/users.conf" ]; then
+  echo "users.conf not found! Copying..."
+  cp -v /nut/conf_template/users.conf /nut/conf/users.conf
+fi
+
+echo '
+-------------------------------------
+'
