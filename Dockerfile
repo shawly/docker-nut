@@ -32,6 +32,7 @@ ARG NUT_REPO
 ARG NUT_BRANCH
 ARG QEMU_ARCH
 ARG BUILD_DATE
+ARG VCS_REF
 ARG S6_OVERLAY_RELEASE
 
 ENV S6_OVERLAY_RELEASE=${S6_OVERLAY_RELEASE} \
@@ -101,10 +102,11 @@ EXPOSE 9000
 
 # Metadata.
 LABEL \
-      org.label-schema.name="nut" \
-      org.label-schema.description="Docker container for nut" \
+      org.label-schema.name="NUT" \
+      org.label-schema.description="Docker container for NUT" \
       org.label-schema.version="unknown" \
       org.label-schema.vcs-url="https://github.com/shawly/docker-nut" \
+      org.label-schema.vcs-ref=$VCS_REF \
       org.label-schema.schema-version="1.0" \
       org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vendor="shawly" \
