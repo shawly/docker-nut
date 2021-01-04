@@ -10,8 +10,8 @@ ARG BASE_IMAGE_PREFIX
 # Set QEMU architecture
 ARG QEMU_ARCH
 
-# Set python version
-ARG PYTHON_VERSION=slim
+# Set python image version
+ARG PYTHON_VERSION=alpine
 
 # Set vars for s6 overlay
 ARG S6_OVERLAY_VERSION=v2.1.0.2
@@ -21,6 +21,9 @@ ARG S6_OVERLAY_RELEASE=https://github.com/just-containers/s6-overlay/releases/do
 # Set NUT vars
 ARG NUT_REPO=https://github.com/blawar/nut.git
 ARG NUT_BRANCH=master
+
+# Provide QEMU files
+FROM multiarch/qemu-user-static as qemu
 
 # Build nut:master
 FROM ${BASE_IMAGE_PREFIX}python:${PYTHON_VERSION}
@@ -35,8 +38,8 @@ ENV S6_OVERLAY_RELEASE=${S6_OVERLAY_RELEASE} \
     NUT_REPO=${NUT_REPO} \
     NUT_BRANCH=${NUT_BRANCH}
 
-# Add qemu-arm-static binary
-COPY .gitignore qemu-${QEMU_ARCH}-static* /usr/bin/
+# Add qemu-arm-static binary (copying /register is a necessary hack for amd64 systems)
+COPY --from=qemu /register /usr/bin/qemu-${QEMU_ARCH}-static* /usr/bin/
 
 # Download S6 Overlay
 ADD ${S6_OVERLAY_RELEASE} /tmp/s6overlay.tar.gz
@@ -48,45 +51,50 @@ WORKDIR /nut
 RUN \
   set -ex && \
   echo "Installing build dependencies..." && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+    apk add --no-cache --virtual build-dependencies \
       git \
-      gcc \
-      curl \
+      build-base \
       libusb-dev \
-      libssl-dev \
-      libcurl4-openssl-dev \
+      libressl-dev \
+      libffi-dev \
+      curl-dev \
+      jpeg-dev \
+      zlib-dev && \
+  echo "Installing runtime dependencies..." && \
+    apk add --no-cache \
+      curl \
+      shadow \
+      coreutils \
+      libjpeg-turbo \
       tzdata && \
   echo "Extracting s6 overlay..." && \
     tar xzf /tmp/s6overlay.tar.gz -C / && \
   echo "Creating nut user..." && \
     useradd -u 1000 -U -M -s /bin/false nut && \
     usermod -G users nut && \
-    mkdir -p /var/log/nut && \
-    chown -R nobody:nogroup /var/log/nut && \
   echo "Cloning nut..." && \
     git clone --depth 1 ${NUT_REPO} /nut && \
     git checkout ${NUT_BRANCH} && \
+    mkdir -p /nut/_NSPOUT /nut/titles && \
     chown -R nut:nut /nut && \
+    mv -v /nut/conf /nut/conf_template && \
+  echo "Removing pyqt5 from requirements.txt since we have no gui..." && \
+    sed -i '/pyqt5/d' requirements.txt && \
   echo "Installing python packages..." && \
     pip3 install --no-cache -r requirements.txt && \
-  echo "Removing build dependencies..." && \
-    apt-get autoremove -y --purge \
-      git \
-      libusb-dev \
-      libssl-dev \
-      libcurl4-openssl-dev \
-      gcc && \
-    apt-get -y autoclean && \
-  echo "Cleaning up temp directory..." && \
-    rm -rf /tmp/* && \
-    rm -rf /var/lib/apt/lists/*
+  echo "Removing unneeded build dependencies..." && \
+    apk del build-dependencies && \
+  echo "Cleaning up directories..." && \
+    rm -f /usr/bin/register && \
+    rm -rf .git .github windows_driver tests gui && \
+    rm -f .coveragerc .editorconfig .gitignore .pep8 .pylintrc autoformat nut.pyproj nut.sln nut_gui.py tasks.py LICENSE requirements* *.md && \
+    rm -rf /tmp/*
 
 # Add files.
 COPY rootfs/ /
 
 # Define mountable directories.
-VOLUME ["/games", "/nut/conf"]
+VOLUME ["/nut/titles", "/nut/conf", "/nut/_NSPOUT"]
 
 # Expose ports.
 EXPOSE 9000
@@ -100,7 +108,7 @@ LABEL \
       org.label-schema.schema-version="1.0" \
       org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vendor="shawly" \
-      org.label-schema.docker.cmd="docker run -d --name=nut -p 9000:9000 -v $HOME/games:/games:rw shawly/nut"
+      org.label-schema.docker.cmd="docker run -d --name=nut -p 9000:9000 -v $HOME/nut/titles:/nut/titles -v $HOME/nut/conf:/nut/conf shawly/nut"
 
 # Start s6.
 ENTRYPOINT ["/init"]
