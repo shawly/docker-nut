@@ -1,5 +1,5 @@
 # Docker container for NUT
-[![Docker Automated build](https://img.shields.io/docker/automated/shawly/nut.svg)](https://hub.docker.com/r/shawly/nut/) [![Docker Image](https://images.microbadger.com/badges/image/shawly/nut.svg)](http://microbadger.com/#/images/shawly/nut) ![Docker Pulls](https://img.shields.io/docker/pulls/shawly/nut) [![Build Status](https://travis-ci.org/shawly/docker-nut.svg?branch=master)](https://travis-ci.org/shawly/docker-nut) [![GitHub Release](https://img.shields.io/github/release/shawly/docker-nut.svg)](https://github.com/shawly/docker-nut/releases/latest)
+[![Docker Automated build](https://img.shields.io/docker/automated/shawly/nut.svg)](https://hub.docker.com/r/shawly/nut/) ![Docker Pulls](https://img.shields.io/docker/pulls/shawly/nut) [![Build Status](https://travis-ci.org/shawly/docker-nut.svg?branch=master)](https://travis-ci.org/shawly/docker-nut) [![GitHub Release](https://img.shields.io/github/release/shawly/docker-nut.svg)](https://github.com/shawly/docker-nut/releases/latest)
 
 This is a Docker container for NUT. An app that acts as a USB and network server for use with [Tinfoil](https://tinfoil.io/Download)
 
