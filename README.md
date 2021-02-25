@@ -5,7 +5,7 @@ This is a Docker container for NUT. An app that acts as a USB and network server
 
 ---
 
-[![nut](https://dummyimage.com/400x110/ffffff/575757&text=NUT)](https://github.com/crafty-controller/nut)
+[![nut](https://dummyimage.com/400x110/ffffff/575757&text=NUT)](https://github.com/blawar/nut)
 
 NUT by [blawar](https://github.com/blawar/nut).
 
