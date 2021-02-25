@@ -14,7 +14,7 @@ ARG QEMU_ARCH
 ARG PYTHON_VERSION=alpine
 
 # Set vars for s6 overlay
-ARG S6_OVERLAY_VERSION=v2.1.0.2
+ARG S6_OVERLAY_VERSION=v2.2.0.3
 ARG S6_OVERLAY_ARCH=amd64
 ARG S6_OVERLAY_RELEASE=https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}/s6-overlay-${S6_OVERLAY_ARCH}.tar.gz
 
@@ -60,6 +60,8 @@ RUN \
       libffi-dev \
       curl-dev \
       jpeg-dev \
+      cargo \
+      rust \
       zlib-dev && \
   echo "Installing runtime dependencies..." && \
     apk add --no-cache \
@@ -81,6 +83,7 @@ RUN \
     mv -v /nut/conf /nut/conf_template && \
   echo "Removing pyqt5 from requirements.txt since we have no gui..." && \
     sed -i '/pyqt5/d' requirements.txt && \
+    sed -i '/qt-range-slider/d' requirements.txt && \
   echo "Installing python packages..." && \
     pip3 install --no-cache -r requirements.txt && \
   echo "Removing unneeded build dependencies..." && \
