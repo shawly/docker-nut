@@ -93,7 +93,6 @@ RUN \
     usermod -G users nut && \
   echo "Cloning nut..." && \
     git clone --depth 1 ${NUT_REPO} /nut && \
-    cd /nut && \
     git checkout ${NUT_BRANCH} && \
     mkdir -p /nut/_NSPOUT /nut/titles && \
     chown -R nut:nut /nut && \
