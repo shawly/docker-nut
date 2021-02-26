@@ -10,7 +10,7 @@ assignees: shawly
 **I have read and followed [all troubleshooting steps from the README.md](https://github.com/shawly/docker-nut#troubleshooting)?**
 
 ```
-// paste the secret help code in here
+// please confirm
 ```
 
 **System configuration:**  
@@ -46,9 +46,9 @@ Output of `ls -l /path/to/your/games/folder`:
 // paste the output of the ls -l /path/to/your/games/folder command here
 ```
 
-Output of `docker exec CONTAINERNAME ls -l /games` (replace *CONTAINERNAME* with your nut container's name):
+Output of `docker exec CONTAINERNAME ls -l /nut/titles` (replace *CONTAINERNAME* with your nut container's name):
 ```
-// paste the output of the docker exec CONTAINERNAME ls -l /games command here
+// paste the output of the docker exec CONTAINERNAME ls -l /nut/titles command here
 ```
 
 My docker run command or my docker-compose.yml:

@@ -1,0 +1,28 @@
+#!/usr/bin/with-contenv sh
+
+USER_ID=${USER_ID:-1000}
+GROUP_ID=${GROUP_ID:-1000}
+
+echo '
+-------------------------------------
+Checking ownership of /nut folder
+-------------------------------------'
+
+if [ "${FIX_OWNERSHIP:-true}" = true ]; then
+    if [ ${USER_ID} != "1000" ]; then
+        echo "USER_ID differs from default, adjusting ownership..."
+        find /nut -user 1000 -exec chown -h nut {} \;
+    fi
+
+    if [ ${GROUP_ID} != "1000" ]; then
+        echo "GROUP_ID differs from default, adjusting ownership..."
+        find /nut -group 1000 -exec chgrp -h nut {} \;
+    fi
+else
+    echo "FIX_OWNERSHIP was disabled, doing nothing."
+fi
+
+echo "
+Done.
+-------------------------------------
+"
