@@ -10,9 +10,6 @@ echo '
 -------------------------------------
 GID/UID
 -------------------------------------'
-echo "Adjusting /nut folder ownership."
-find /nut ! -path /nut/titles ! -path /nut/conf ! -path /nut/_NSPOUT -group 1000 -exec chgrp -hv $GROUP_ID {} \;
-find /nut ! -path /nut/titles ! -path /nut/conf ! -path /nut/_NSPOUT -user 1000 -exec chown -hv $USER_ID {} \;
 echo "
 User uid:    $(id -u nut)
 User gid:    $(id -g nut)

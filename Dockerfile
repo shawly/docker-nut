@@ -4,43 +4,59 @@
 # https://github.com/shawly/docker-nut
 #
 
-# Base image prefix for automated dockerhub build
-ARG BASE_IMAGE_PREFIX
-
-# Set QEMU architecture
-ARG QEMU_ARCH
-
 # Set python image version
 ARG PYTHON_VERSION=alpine
 
 # Set vars for s6 overlay
 ARG S6_OVERLAY_VERSION=v2.2.0.3
-ARG S6_OVERLAY_ARCH=amd64
-ARG S6_OVERLAY_RELEASE=https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}/s6-overlay-${S6_OVERLAY_ARCH}.tar.gz
+ARG S6_OVERLAY_BASE_URL=https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}
 
 # Set NUT vars
 ARG NUT_REPO=https://github.com/blawar/nut.git
 ARG NUT_BRANCH=master
 
-# Provide QEMU files
-FROM multiarch/qemu-user-static as qemu
+# Set base images with s6 overlay download variable (necessary for multi-arch building via GitHub workflows)
+FROM python:${PYTHON_VERSION} as python-amd64
+
+ARG S6_OVERLAY_VERSION
+ARG S6_OVERLAY_BASE_URL
+ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-amd64.tar.gz"
+
+FROM python:${PYTHON_VERSION} as python-386
+
+ARG S6_OVERLAY_VERSION
+ARG S6_OVERLAY_BASE_URL
+ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-x86.tar.gz"
+
+FROM python:${PYTHON_VERSION} as python-armv6
+
+ARG S6_OVERLAY_VERSION
+ARG S6_OVERLAY_BASE_URL
+ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-armhf.tar.gz"
+
+FROM python:${PYTHON_VERSION} as python-armv7
+
+ARG S6_OVERLAY_VERSION
+ARG S6_OVERLAY_BASE_URL
+ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-arm.tar.gz"
+
+FROM python:${PYTHON_VERSION} as python-arm64
+
+ARG S6_OVERLAY_VERSION
+ARG S6_OVERLAY_BASE_URL
+ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-aarch64.tar.gz"
+
+FROM python:${PYTHON_VERSION} as python-ppc64le
+
+ARG S6_OVERLAY_VERSION
+ARG S6_OVERLAY_BASE_URL
+ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-ppc64le.tar.gz"
 
 # Build nut:master
-FROM ${BASE_IMAGE_PREFIX}python:${PYTHON_VERSION}
+FROM python-${TARGETARCH:-amd64}${TARGETVARIANT}
 
 ARG NUT_REPO
 ARG NUT_BRANCH
-ARG QEMU_ARCH
-ARG BUILD_DATE
-ARG VCS_REF
-ARG S6_OVERLAY_RELEASE
-
-ENV S6_OVERLAY_RELEASE=${S6_OVERLAY_RELEASE} \
-    NUT_REPO=${NUT_REPO} \
-    NUT_BRANCH=${NUT_BRANCH}
-
-# Add qemu-arm-static binary (copying /register is a necessary hack for amd64 systems)
-COPY --from=qemu /register /usr/bin/qemu-${QEMU_ARCH}-static* /usr/bin/
 
 # Download S6 Overlay
 ADD ${S6_OVERLAY_RELEASE} /tmp/s6overlay.tar.gz
@@ -102,18 +118,6 @@ VOLUME ["/nut/titles", "/nut/conf", "/nut/_NSPOUT"]
 
 # Expose ports.
 EXPOSE 9000
-
-# Metadata.
-LABEL \
-      org.label-schema.name="NUT" \
-      org.label-schema.description="Docker container for NUT" \
-      org.label-schema.version="unknown" \
-      org.label-schema.vcs-url="https://github.com/shawly/docker-nut" \
-      org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.schema-version="1.0" \
-      org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.vendor="shawly" \
-      org.label-schema.docker.cmd="docker run -d --name=nut -p 9000:9000 -v $HOME/nut/titles:/nut/titles -v $HOME/nut/conf:/nut/conf shawly/nut"
 
 # Start s6.
 ENTRYPOINT ["/init"]

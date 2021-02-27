@@ -1,3 +1,8 @@
-#!/usr/bin/execlineb -P
-s6-setuidgid nut
-/usr/local/bin/python /nut/nut.py --scan --server
+#!/usr/bin/with-contenv bash
+
+cd /nut
+
+UMASK=${UMASK:-022}
+umask "$UMASK"
+
+s6-setuidgid nut /usr/local/bin/python /nut/nut.py --scan --server

@@ -1,5 +1,5 @@
 # Docker container for NUT
-[![Docker Automated build](https://img.shields.io/docker/cloud/automated/shawly/nut.svg)](https://hub.docker.com/r/shawly/nut/) ![Docker Pulls](https://img.shields.io/docker/pulls/shawly/nut) ![Docker Image Size (tag)](https://img.shields.io/docker/image-size/shawly/nut/latest) [![GitHub Release](https://img.shields.io/github/release/shawly/docker-nut.svg)](https://github.com/shawly/docker-nut/releases/latest)
+[![Docker Automated build](https://img.shields.io/badge/docker%20build-automated-brightgreen)](https://github.com/shawly/docker-nut/actions) [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/shawly/docker-nut/Docker)](https://github.com/shawly/docker-nut/actions) [![Docker Pulls](https://img.shields.io/docker/pulls/shawly/nut)](https://hub.docker.com/r/shawly/nut) [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/shawly/nut/latest)](https://hub.docker.com/r/shawly/nut) [![GitHub Release](https://img.shields.io/github/release/shawly/docker-nut.svg)](https://github.com/shawly/docker-nut/releases/latest)
 
 This is a Docker container for NUT. An app that acts as a USB and network server for use with [Tinfoil](https://tinfoil.io/Download)
 
@@ -30,15 +30,16 @@ NUT by [blawar](https://github.com/blawar/nut).
 
 The architectures supported by this image are:
 
-| Architecture | Tag | Status |
-| :----: | --- | ------ |
-| x86-64 | amd64-latest | working |
-| x86 | i386-latest | experimental |
-| arm64 | arm64v8-latest | experimental |
-| armv7 | arm32v7-latest | experimental |
-| armhf | arm32v6-latest | experimental |
+| Architecture | Status |
+| :----: | ------ |
+| x86-64 | working |
+| x86 | untested |
+| arm64 | untested |
+| armv7 | untested |
+| armhf | untested |
+| ppc64le | untested |
 
-*I'm declaring the arm images as **experimental** because I only own an older first generation RaspberryPi Model B+ I can't properly test the image on other devices, technically it should work on all RaspberryPi models and similar SoCs. While emulating the architecture with qemu works and can be used for testing, I can't guarantee that there will be no issues, just try it.*
+*I'm declaring the arm images as **untested** because I only own an older first generation RaspberryPi Model B+ I can't properly test the image on other devices, technically it should work on all RaspberryPi models and similar SoCs. While emulating the architecture with qemu works and can be used for testing, I can't guarantee that there will be no issues, just try it.*
 
 ## Quick Start
 
@@ -89,6 +90,8 @@ of this parameter has the format `<VARIABLE_NAME>=<VALUE>`.
 |`USER_ID`| ID of the user the application runs as.  See [User/Group IDs](#usergroup-ids) to better understand when this should be set. | `1000` |
 |`GROUP_ID`| ID of the group the application runs as.  See [User/Group IDs](#usergroup-ids) to better understand when this should be set. | `1000` |
 |`TZ`| [TimeZone] of the container.  Timezone can also be set by mapping `/etc/localtime` between the host and the container. | `Etc/UTC` |
+|`UMASK`| This sets the umask for the crafty control process in the container. | `022` |
+|`FIX_OWNERSHIP`| This executes a script which checks if the USER_ID & GROUP_ID changed from the default of 1000 and fixes the ownership of the /nut folder if necessary, otherwise nut wont't start. It's recommended to leave this enabled if you changed the USER_ID or GROUP_ID. | `true` |
 
 ### Data Volumes
 
