@@ -81,6 +81,7 @@ RUN \
       zlib-dev && \
   echo "Installing runtime dependencies..." && \
     apk add --no-cache \
+      bash \
       curl \
       shadow \
       coreutils \
