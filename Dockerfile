@@ -13,7 +13,7 @@ ARG S6_OVERLAY_BASE_URL=https://github.com/just-containers/s6-overlay/releases/d
 
 # Set NUT vars
 ARG NUT_REPO=https://github.com/blawar/nut.git
-ARG NUT_BRANCH=master
+ARG NUT_BRANCH=v3.3
 
 # Set base images with s6 overlay download variable (necessary for multi-arch building via GitHub workflows)
 FROM python:${PYTHON_VERSION} as python-amd64
@@ -93,8 +93,7 @@ RUN \
     useradd -u 1000 -U -M -s /bin/false nut && \
     usermod -G users nut && \
   echo "Cloning nut..." && \
-    git clone --depth 1 ${NUT_REPO} /nut && \
-    git checkout ${NUT_BRANCH} && \
+    git clone --depth 1 --branch ${NUT_BRANCH} ${NUT_REPO} /nut && \
     mkdir -p /nut/_NSPOUT /nut/titles && \
     chown -R nut:nut /nut && \
     mv -v /nut/conf /nut/conf_template && \
