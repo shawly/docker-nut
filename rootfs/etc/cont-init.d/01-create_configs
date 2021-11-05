@@ -14,6 +14,11 @@ if [ ! -f "/nut/conf/users.conf" ]; then
   cp -v /nut/conf_template/users.conf /nut/conf/users.conf
 fi
 
+if [ ! -f "/nut/conf/blacklist.online.txt" ]; then
+  echo "blacklist.online.txt not found! Copying..."
+  cp -v /nut/conf_template/blacklist.online.txt /nut/conf/blacklist.online.txt
+fi
+
 echo '
 -------------------------------------
 '

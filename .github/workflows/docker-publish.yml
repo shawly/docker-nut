@@ -17,7 +17,7 @@ env:
   IMAGE_NAME: nut
   IMAGE_TITLE: NUT
   IMAGE_DESCRIPTION: Docker container for NUT, a network server for Tinfoil
-  APP_VERSION: 3.1
+  APP_VERSION: 3.3
 
 jobs:
   # Run tests.
@@ -65,25 +65,37 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Prepare
+      if: github.event_name != 'pull_request'
       id: prep
       run: |
         DOCKER_IMAGE=${{ github.repository_owner }}/$IMAGE_NAME
 
         # Strip git ref prefix from version
-        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+        VERSION_FULL=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\)$,\1,')
+        VERSION_MINOR=$(echo "$VERSION_FULL" | sed 's,\.[^.]*$,,')
+        VERSION_MAJOR=$(echo "$VERSION_MINOR" | sed 's,\.[^.]*$,,')
 
         # Use Docker `edge` tag convention and pr-<number> for pull requests
-        [ "$VERSION" == "main" ] && VERSION=edge
-        [ ${{ github.ref }} == refs/pull/* ] && VERSION=pr-${{ github.event.number }}
+        [ "$VERSION_FULL" == "main" ] && VERSION_FULL=edge
+        [ ${{ github.ref }} == refs/pull/* ] && VERSION_FULL=pr-${{ github.event.number }}
 
-        TAGS="${DOCKER_IMAGE}:${VERSION}"  
-        [ "$VERSION" != "edge" ] && TAGS="$TAGS,${DOCKER_IMAGE}:latest"
+        TAGS="${DOCKER_IMAGE}:${VERSION_FULL}"  
+        [ "$VERSION_FULL" != "edge" -a ${VERSION_FULL:0:3} != "pr-" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_MINOR},${DOCKER_IMAGE}:${VERSION_MAJOR},${DOCKER_IMAGE}:latest"
 
-        echo ::set-output name=version::${VERSION}
+        echo ::set-output name=version::${VERSION_FULL}
         echo ::set-output name=tags::${TAGS}
         echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
     - name: Build and push
+      if: github.event_name != 'pull_request'
       id: docker_build
       uses: docker/build-push-action@v2
       with:
@@ -101,4 +113,13 @@ jobs:
           org.opencontainers.image.created=${{ steps.prep.outputs.created }}
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.version=$APP_VERSION
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new
 
+    # Temp fix
+    # https://github.com/docker/build-push-action/issues/252
+    # https://github.com/moby/buildkit/issues/1896
+    - name: Move cache
+      run: |
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
