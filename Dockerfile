@@ -14,6 +14,7 @@ ARG S6_OVERLAY_BASE_URL=https://github.com/just-containers/s6-overlay/releases/d
 # Set NUT vars
 ARG NUT_BRANCH=tags/v3.3
 ARG NUT_RELEASE=https://github.com/blawar/nut/archive/refs/${NUT_BRANCH}.tar.gz
+ARG TITLEDB_URL=https://github.com/blawar/titledb
 
 # Set base images with s6 overlay download variable (necessary for multi-arch building via GitHub workflows)
 FROM python:${PYTHON_VERSION} as python-amd64
@@ -108,8 +109,14 @@ RUN \
 # Build nut
 FROM python-${TARGETARCH:-amd64}${TARGETVARIANT}
 
+ARG TITLEDB_URL
+
 ENV UMASK=022 \
-    FIX_OWNERSHIP=true
+    FIX_OWNERSHIP=true \
+    TITLEDB_UPDATE=true \
+    TITLEDB_URL=${TITLEDB_URL} \
+    TITLEDB_REGION=US \
+    TITLEDB_LANGUAGE=en
 
 # Download S6 Overlay
 ADD ${S6_OVERLAY_RELEASE} /tmp/s6overlay.tar.gz
@@ -131,7 +138,9 @@ RUN \
       shadow \
       coreutils \
       libjpeg-turbo \
-      tzdata && \
+      tzdata \
+      diffutils \
+      git && \
   echo "Extracting s6 overlay..." && \
     tar xzf /tmp/s6overlay.tar.gz -C / && \
   echo "Creating nut user..." && \

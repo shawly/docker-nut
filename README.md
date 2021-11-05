@@ -60,7 +60,7 @@ docker run -d \
 Where:
   - `$HOME/nut/titles`: This location contains nsp files.
   - `$HOME/nut/conf`: This location contains the config files for NUT.
-  - `$HOME/nut/_NSPOUT`: This location contains the nps files packed by NUT.
+  - `$HOME/nut/_NSPOUT`: This location contains the nsp files packed by NUT.
 
 ## Usage
 
@@ -92,6 +92,10 @@ of this parameter has the format `<VARIABLE_NAME>=<VALUE>`.
 |`TZ`| [TimeZone] of the container.  Timezone can also be set by mapping `/etc/localtime` between the host and the container. | `Etc/UTC` |
 |`UMASK`| This sets the umask for the crafty control process in the container. | `022` |
 |`FIX_OWNERSHIP`| This executes a script which checks if the USER_ID & GROUP_ID changed from the default of 1000 and fixes the ownership of the /nut folder if necessary, otherwise nut wont't start. It's recommended to leave this enabled if you changed the USER_ID or GROUP_ID. | `true` |
+|`TITLEDB_UPDATE`| If the container should update the titledb when starting. | `true` |
+|`TITLEDB_URL`| Git repository from which the titledb should be pulled. (If you change this URL you need to remove the /nut/titledb folder within your container!) | `https://github.com/blawar/titledb` |
+|`TITLEDB_REGION`| Region to be used when importing the titledb. | `true` |
+|`TITLEDB_LANGUAGE`| Language to be used when importing the titledb. | `true` |
 
 ### Data Volumes
 
@@ -104,6 +108,8 @@ format: `<HOST_DIR>:<CONTAINER_DIR>[:PERMISSIONS]`.
 |`/nut/titles`| rw | This is the path NUT will use to scan for nsps. |
 |`/nut/conf`| rw | This is the path NUT will use to read its config files. |
 |`/nut/_NSPOUT`| rw | This is the path NUT use for outputting nsp files. |
+
+**Note**: You can also use `/nut/titledb` within a separate bind mount or volume so your titledb is persisted between recreation of your container, this improves startup time.
 
 ### Ports
 
@@ -153,6 +159,8 @@ services:
       - TZ: Europe/Berlin
       - USER_ID: 9000
       - GROUP_ID: 9000
+      - TITLEDB_REGION: US
+      - TITLEDB_LANGUAGE: en
     ports:
       - "9000:9000"
     volumes:
@@ -204,3 +212,19 @@ uid=1000(myuser) gid=1000(myuser) groups=1000(myuser),4(adm),24(cdrom),27(sudo),
 
 The value of `uid` (user ID) and `gid` (group ID) are the ones that you should
 be given the container.
+
+## Troubleshooting
+
+### The log says `could not load keys.txt, all crypto operations will fail`
+
+If you just want to serve titles for your Switch you don't need the keys.txt at all.
+Otherwise you can extract the keys.txt via biskeydump and Lockpick or find them on the internet, I won't provide any links however use Google.
+
+### The log says `titledb/db.nza unknown extension titledb/db.nza`
+
+You can ignore this.
+
+### The log says something about "Permission denied" and/or NUT cant find any nsp files
+
+This means your folder permissions are not correct or rather the folders are owned by a user that has a uid different from `1000`, see [User/Group IDs](#usergroup-ids).
+Beware, if you have the environment variable `FIX_OWNERSHIP` set to `true` and change the `USER_ID` or `GROUP_ID` your volume's ownership will be changed!

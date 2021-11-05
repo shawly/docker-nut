@@ -1,0 +1,36 @@
+#!/usr/bin/with-contenv sh
+
+USER_ID=${USER_ID:-1000}
+GROUP_ID=${GROUP_ID:-1000}
+TITLEDB_UPDATE=${UPDATE_TITLEDB:-true}
+TITLEDB_URL=${TITLEDB_URL:-https://github.com/blawar/titledb}
+TITLEDB_REGION=${TITLEDB_REGION:-US}
+TITLEDB_LANGUAGE=${TITLEDB_LANGUAGE:-en}
+
+echo '
+-------------------------------------
+Updating titledb...
+-------------------------------------'
+
+if [ "$TITLEDB_UPDATE" = true ]; then
+    if [ ! -d "/nut/titledb/.git" ]; then
+        echo "Getting titledb, this will take some time..."
+        rm -rf /nut/titledb/*
+        git clone --depth 1 "$TITLEDB_URL" /nut/titledb
+        echo "Adjusting ownership of /nut/titledb folder..."
+        chown -R $USER_ID:$GROUP_ID /nut/titledb
+    else
+        echo "Updating titledb, this might take some time..."
+        git -C /nut/titledb pull
+    fi
+    echo "Importing titledb..."
+    cd /nut
+    s6-setuidgid nut /usr/local/bin/python /nut/nut.py -U --import-region $TITLEDB_REGION --language $TITLEDB_LANGUAGE
+else
+    echo "TITLEDB_UPDATE was disabled, skipping titledb update."
+fi
+
+echo "
+Done.
+-------------------------------------
+"

@@ -1,12 +1,22 @@
-#!/usr/bin/with-contenv sh
+#!/usr/bin/with-contenv bash
+
+USER_ID=${USER_ID:-1000}
+GROUP_ID=${GROUP_ID:-1000}
 
 echo '
 -------------------------------------
-Checking conf folder...
+Checking conf folder... 
 -------------------------------------'
 if [ ! -f "/nut/conf/nut.default.conf" ]; then
   echo "nut.default.conf not found! Copying..."
   cp -v /nut/conf_template/nut.default.conf /nut/conf/nut.default.conf
+  echo '{}' > /nut/conf/nut.conf
+fi
+
+if ! diff /nut/conf/nut.default.conf /nut/conf_template/nut.default.conf > /dev/null; then
+  echo "nut.default.conf has been altered or updated!"
+  echo "To update your default config just remove nut.default.conf and restart the container."
+  echo "It is recommended to make changes within a nut.conf file rather than in nut.default.conf."
 fi
 
 if [ ! -f "/nut/conf/users.conf" ]; then
@@ -18,6 +28,15 @@ if [ ! -f "/nut/conf/blacklist.online.txt" ]; then
   echo "blacklist.online.txt not found! Copying..."
   cp -v /nut/conf_template/blacklist.online.txt /nut/conf/blacklist.online.txt
 fi
+
+if ! diff /nut/conf/blacklist.online.txt /nut/conf_template/blacklist.online.txt > /dev/null; then
+  echo "blacklist.online.txt has been updated! Saving as blacklist.online.txt.new..."
+  cp -v /nut/conf_template/blacklist.online.txt /nut/conf/blacklist.online.txt.new
+  echo "Make sure to adjust your blacklist.online.txt or override it with the new one."
+fi
+
+echo "Changing ownership of /nut/conf folder..."
+chown -R $USER_ID:$GROUP_ID /nut/conf
 
 echo '
 -------------------------------------
