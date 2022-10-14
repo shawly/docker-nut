@@ -82,7 +82,7 @@ RUN \
 # Download NUT
 ADD ${NUT_RELEASE} /tmp/nut.tar.gz
 
-# Build wheels
+# Build venv
 RUN \
   set -ex && \
   echo "Extracting nut..." && \
@@ -96,17 +96,19 @@ RUN \
     echo "markupsafe==2.0.1" >> requirements.txt && \
   echo "Upgrading pip..." && \
     pip3 install --upgrade pip && \
+  echo "Setup venv..." && \
+    pip3 install virtualenv && \
+    python3 -m venv venv && \
+    source venv/bin/activate && \
   echo "Building wheels for requirements..." && \
-    pip3 wheel --no-cache-dir --wheel-dir /usr/src/wheels -r requirements.txt && \
+    pip3 install -r requirements.txt && \
   echo "Creating volume directories..." && \
     mv -v conf conf_template && \
     mkdir -p conf _NSPOUT titles && \
   echo "Cleaning up directories..." && \
-    rm -f /usr/bin/register && \
     rm -rf .github windows_driver gui tests tests-gui && \
     rm -f .coveragerc .editorconfig .gitignore .pep8 .pylintrc .pre-commit-config.yaml \
-          autoformat nut.pyproj nut.sln nut_gui.py tasks.py requirements_dev.txt setup.cfg pytest.ini *.md && \
-    rm -rf /tmp/*
+          autoformat nut.pyproj nut.sln nut_gui.py tasks.py requirements_dev.txt setup.cfg pytest.ini *.md
 
 # Setup nut image
 FROM python-${TARGETARCH:-amd64}${TARGETVARIANT}
@@ -118,13 +120,13 @@ ENV UMASK=022 \
     TITLEDB_UPDATE=true \
     TITLEDB_URL=${TITLEDB_URL} \
     TITLEDB_REGION=US \
-    TITLEDB_LANGUAGE=en
+    TITLEDB_LANGUAGE=en \
+    PATH="/nut/venv/bin:$PATH"
 
 # Download S6 Overlay
 ADD ${S6_OVERLAY_RELEASE} /tmp/s6overlay.tar.gz
 
 # Copy wheels & crafty-web
-COPY --from=builder /usr/src/wheels /usr/src/wheels
 COPY --chown=1000 --from=builder /nut /nut
 
 # Change working dir
@@ -148,10 +150,6 @@ RUN \
   echo "Creating nut user..." && \
     useradd -u 1000 -U -M -s /bin/false nut && \
     usermod -G users nut && \
-  echo "Upgrading pip..." && \
-    pip3 install --upgrade pip && \
-  echo "Install requirements..." && \
-    pip3 install --no-index --find-links=/usr/src/wheels -r requirements.txt && \
   echo "Cleaning up directories..." && \
     rm -f /usr/bin/register && \
     rm -rf /tmp/*
