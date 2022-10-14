@@ -1,4 +1,5 @@
 # Docker container for NUT
+
 [![Docker Automated build](https://img.shields.io/badge/docker%20build-automated-brightgreen)](https://github.com/shawly/docker-nut/actions) [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/shawly/docker-nut/Docker)](https://github.com/shawly/docker-nut/actions) [![Docker Pulls](https://img.shields.io/docker/pulls/shawly/nut)](https://hub.docker.com/r/shawly/nut) [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/shawly/nut/latest)](https://hub.docker.com/r/shawly/nut) [![GitHub Release](https://img.shields.io/github/release/shawly/docker-nut.svg)](https://github.com/shawly/docker-nut/releases/latest)
 
 This is a Docker container for NUT. An app that acts as a USB and network server for use with [Tinfoil](https://tinfoil.io/Download)
@@ -10,36 +11,37 @@ This is a Docker container for NUT. An app that acts as a USB and network server
 NUT by [blawar](https://github.com/blawar/nut).
 
 ---
+
 ## Table of Content
 
-   * [Docker container for nut](#docker-container-for-nut)
-      * [Table of Content](#table-of-content)
-      * [Supported Architectures](#supported-architectures)
-      * [Quick Start](#quick-start)
-      * [Usage](#usage)
-         * [Environment Variables](#environment-variables)
-         * [Data Volumes](#data-volumes)
-         * [Ports](#ports)
-         * [Changing Parameters of a Running Container](#changing-parameters-of-a-running-container)
-      * [Docker Compose File](#docker-compose-file)
-      * [Docker Image Update](#docker-image-update)
-      * [User/Group IDs](#usergroup-ids)
-      * [Support or Contact](#support-or-contact)
+- [Docker container for nut](#docker-container-for-nut)
+  - [Table of Content](#table-of-content)
+  - [Supported Architectures](#supported-architectures)
+  - [Quick Start](#quick-start)
+  - [Usage](#usage)
+    - [Environment Variables](#environment-variables)
+    - [Data Volumes](#data-volumes)
+    - [Ports](#ports)
+    - [Changing Parameters of a Running Container](#changing-parameters-of-a-running-container)
+  - [Docker Compose File](#docker-compose-file)
+  - [Docker Image Update](#docker-image-update)
+  - [User/Group IDs](#usergroup-ids)
+  - [Support or Contact](#support-or-contact)
 
 ## Supported Architectures
 
 The architectures supported by this image are:
 
-| Architecture | Status |
-| :----: | ------ |
-| x86-64 | working |
-| x86 | untested |
-| arm64 | untested |
-| armv7 | untested |
-| armhf | untested |
-| ppc64le | untested |
+| Architecture | Status                                                   |
+| :----------: | -------------------------------------------------------- |
+|    x86-64    | working                                                  |
+|     x86      | untested                                                 |
+|    arm64     | [working](https://github.com/shawly/docker-nut/issues/3) |
+|    armv7     | untested                                                 |
+|    armhf     | untested                                                 |
+|   ppc64le    | untested                                                 |
 
-*I'm declaring the arm images as **untested** because I only own an older first generation RaspberryPi Model B+ I can't properly test the image on other devices, technically it should work on all RaspberryPi models and similar SoCs. While emulating the architecture with qemu works and can be used for testing, I can't guarantee that there will be no issues, just try it.*
+_I'm declaring the arm images as **untested** because I only own an older first generation RaspberryPi Model B+ I can't properly test the image on other devices, technically it should work on all RaspberryPi models and similar SoCs. While emulating the architecture with qemu works and can be used for testing, I can't guarantee that there will be no issues, just try it._
 
 ## Quick Start
 
@@ -47,6 +49,7 @@ The architectures supported by this image are:
 and parameters should be adjusted to your need.
 
 Launch the nut docker container with the following command:
+
 ```
 docker run -d \
     --name=nut \
@@ -58,9 +61,10 @@ docker run -d \
 ```
 
 Where:
-  - `$HOME/nut/titles`: This location contains nsp files.
-  - `$HOME/nut/conf`: This location contains the config files for NUT.
-  - `$HOME/nut/_NSPOUT`: This location contains the nsp files packed by NUT.
+
+- `$HOME/nut/titles`: This location contains nsp files.
+- `$HOME/nut/conf`: This location contains the config files for NUT.
+- `$HOME/nut/_NSPOUT`: This location contains the nsp files packed by NUT.
 
 ## Usage
 
@@ -72,55 +76,56 @@ docker run [-d] \
     [-p <HOST_PORT>:<CONTAINER_PORT>]... \
     shawly/nut
 ```
-| Parameter | Description |
-|-----------|-------------|
-| -d        | Run the container in background.  If not set, the container runs in foreground. |
-| -e        | Pass an environment variable to the container.  See the [Environment Variables](#environment-variables) section for more details. |
-| -v        | Set a volume mapping (allows to share a folder/file between the host and the container).  See the [Data Volumes](#data-volumes) section for more details. |
-| -p        | Set a network port mapping (exposes an internal container port to the host).  See the [Ports](#ports) section for more details. |
+
+| Parameter | Description                                                                                                                                              |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -d        | Run the container in background. If not set, the container runs in foreground.                                                                           |
+| -e        | Pass an environment variable to the container. See the [Environment Variables](#environment-variables) section for more details.                         |
+| -v        | Set a volume mapping (allows to share a folder/file between the host and the container). See the [Data Volumes](#data-volumes) section for more details. |
+| -p        | Set a network port mapping (exposes an internal container port to the host). See the [Ports](#ports) section for more details.                           |
 
 ### Environment Variables
 
 To customize some properties of the container, the following environment
-variables can be passed via the `-e` parameter (one for each variable).  Value
+variables can be passed via the `-e` parameter (one for each variable). Value
 of this parameter has the format `<VARIABLE_NAME>=<VALUE>`.
 
-| Variable       | Description                                  | Default |
-|----------------|----------------------------------------------|---------|
-|`USER_ID`| ID of the user the application runs as.  See [User/Group IDs](#usergroup-ids) to better understand when this should be set. | `1000` |
-|`GROUP_ID`| ID of the group the application runs as.  See [User/Group IDs](#usergroup-ids) to better understand when this should be set. | `1000` |
-|`TZ`| [TimeZone] of the container.  Timezone can also be set by mapping `/etc/localtime` between the host and the container. | `Etc/UTC` |
-|`UMASK`| This sets the umask for the crafty control process in the container. | `022` |
-|`FIX_OWNERSHIP`| This executes a script which checks if the USER_ID & GROUP_ID changed from the default of 1000 and fixes the ownership of the /nut folder if necessary, otherwise nut wont't start. It's recommended to leave this enabled if you changed the USER_ID or GROUP_ID. | `true` |
-|`TITLEDB_UPDATE`| If the container should update the titledb when starting. | `true` |
-|`TITLEDB_URL`| Git repository from which the titledb should be pulled. (If you change this URL you need to remove the /nut/titledb folder within your container!) | `https://github.com/blawar/titledb` |
-|`TITLEDB_REGION`| Region to be used when importing the titledb. | `true` |
-|`TITLEDB_LANGUAGE`| Language to be used when importing the titledb. | `true` |
+| Variable           | Description                                                                                                                                                                                                                                                        | Default                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| `USER_ID`          | ID of the user the application runs as. See [User/Group IDs](#usergroup-ids) to better understand when this should be set.                                                                                                                                         | `1000`                              |
+| `GROUP_ID`         | ID of the group the application runs as. See [User/Group IDs](#usergroup-ids) to better understand when this should be set.                                                                                                                                        | `1000`                              |
+| `TZ`               | [TimeZone] of the container. Timezone can also be set by mapping `/etc/localtime` between the host and the container.                                                                                                                                              | `Etc/UTC`                           |
+| `UMASK`            | This sets the umask for the crafty control process in the container.                                                                                                                                                                                               | `022`                               |
+| `FIX_OWNERSHIP`    | This executes a script which checks if the USER_ID & GROUP_ID changed from the default of 1000 and fixes the ownership of the /nut folder if necessary, otherwise nut wont't start. It's recommended to leave this enabled if you changed the USER_ID or GROUP_ID. | `true`                              |
+| `TITLEDB_UPDATE`   | If the container should update the titledb when starting.                                                                                                                                                                                                          | `true`                              |
+| `TITLEDB_URL`      | Git repository from which the titledb should be pulled. (If you change this URL you need to remove the /nut/titledb folder within your container!)                                                                                                                 | `https://github.com/blawar/titledb` |
+| `TITLEDB_REGION`   | Region to be used when importing the titledb.                                                                                                                                                                                                                      | `true`                              |
+| `TITLEDB_LANGUAGE` | Language to be used when importing the titledb.                                                                                                                                                                                                                    | `true`                              |
 
 ### Data Volumes
 
-The following table describes data volumes used by the container.  The mappings
-are set via the `-v` parameter.  Each mapping is specified with the following
+The following table describes data volumes used by the container. The mappings
+are set via the `-v` parameter. Each mapping is specified with the following
 format: `<HOST_DIR>:<CONTAINER_DIR>[:PERMISSIONS]`.
 
-| Container path  | Permissions | Description |
-|-----------------|-------------|-------------|
-|`/nut/titles`| rw | This is the path NUT will use to scan for nsps. |
-|`/nut/conf`| rw | This is the path NUT will use to read its config files. |
-|`/nut/_NSPOUT`| rw | This is the path NUT use for outputting nsp files. |
+| Container path | Permissions | Description                                             |
+| -------------- | ----------- | ------------------------------------------------------- |
+| `/nut/titles`  | rw          | This is the path NUT will use to scan for nsps.         |
+| `/nut/conf`    | rw          | This is the path NUT will use to read its config files. |
+| `/nut/_NSPOUT` | rw          | This is the path NUT use for outputting nsp files.      |
 
 **Note**: You can also use `/nut/titledb` within a separate bind mount or volume so your titledb is persisted between recreation of your container, this improves startup time.
 
 ### Ports
 
-Here is the list of ports used by the container.  They can be mapped to the host
-via the `-p` parameter (one per port mapping).  Each mapping is defined in the
-following format: `<HOST_PORT>:<CONTAINER_PORT>`.  The port number inside the
+Here is the list of ports used by the container. They can be mapped to the host
+via the `-p` parameter (one per port mapping). Each mapping is defined in the
+following format: `<HOST_PORT>:<CONTAINER_PORT>`. The port number inside the
 container cannot be changed, but you are free to use any port on the host side.
 
-| Port | Mapping to host | Description |
-|------|-----------------|-------------|
-| 9000 | Mandatory | Port used for NUT webinterface. |
+| Port | Mapping to host | Description                     |
+| ---- | --------------- | ------------------------------- |
+| 9000 | Mandatory       | Port used for NUT webinterface. |
 
 ### Changing Parameters of a Running Container
 
@@ -128,30 +133,34 @@ As seen, environment variables, volume mappings and port mappings are specified
 while creating the container.
 
 The following steps describe the method used to add, remove or update
-parameter(s) of an existing container.  The generic idea is to destroy and
+parameter(s) of an existing container. The generic idea is to destroy and
 re-create the container:
 
-  1. Stop the container (if it is running):
+1. Stop the container (if it is running):
+
 ```
 docker stop nut
 ```
-  2. Remove the container:
+
+2. Remove the container:
+
 ```
 docker rm nut
 ```
-  3. Create/start the container using the `docker run` command, by adjusting
-     parameters as needed.
+
+3. Create/start the container using the `docker run` command, by adjusting
+   parameters as needed.
 
 ## Docker Compose File
 
 Here is an example of a `docker-compose.yml` file that can be used with
 [Docker Compose](https://docs.docker.com/compose/overview/).
 
-Make sure to adjust according to your needs.  Note that only mandatory network
+Make sure to adjust according to your needs. Note that only mandatory network
 ports are part of the example.
 
 ```yaml
-version: '3'
+version: "3"
 services:
   nut:
     image: shawly/nut
@@ -174,25 +183,31 @@ services:
 If the system on which the container runs doesn't provide a way to easily update
 the Docker image, the following steps can be followed:
 
-  1. Fetch the latest image:
+1. Fetch the latest image:
+
 ```
 docker pull shawly/nut
 ```
-  2. Stop the container:
+
+2. Stop the container:
+
 ```
 docker stop nut
 ```
-  3. Remove the container:
+
+3. Remove the container:
+
 ```
 docker rm nut
 ```
-  4. Start the container using the `docker run` command.
+
+4. Start the container using the `docker run` command.
 
 ## User/Group IDs
 
 When using data volumes (`-v` flags), permissions issues can occur between the
-host and the container.  For example, the user within the container may not
-exists on the host.  This could prevent the host from properly accessing files
+host and the container. For example, the user within the container may not
+exists on the host. This could prevent the host from properly accessing files
 and folders on the shared volume.
 
 To avoid any problem, you can specify the user the application should run as.
@@ -206,6 +221,7 @@ user owning the data volume on the host:
     id <username>
 
 Which gives an output like this one:
+
 ```
 uid=1000(myuser) gid=1000(myuser) groups=1000(myuser),4(adm),24(cdrom),27(sudo),46(plugdev),113(lpadmin)
 ```
