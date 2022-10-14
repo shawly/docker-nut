@@ -5,7 +5,7 @@
 #
 
 # Set python image version
-ARG PYTHON_VERSION=alpine
+ARG PYTHON_VERSION=3.10-alpine3.15
 
 # Set vars for s6 overlay
 ARG S6_OVERLAY_VERSION=v2.2.0.3
@@ -53,7 +53,7 @@ ARG S6_OVERLAY_VERSION
 ARG S6_OVERLAY_BASE_URL
 ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-ppc64le.tar.gz"
 
-# Build crafty-web:master
+# Build nut
 FROM python-${TARGETARCH:-amd64}${TARGETVARIANT} as builder
 
 ARG NUT_RELEASE
@@ -92,6 +92,8 @@ RUN \
   echo "Removing pyqt5 from requirements.txt since we have no gui..." && \
     sed -i '/pyqt5/d' requirements.txt && \
     sed -i '/qt-range-slider/d' requirements.txt && \
+  echo "Fixing markupsafe issue..." && \
+    echo "markupsafe==2.0.1" >> requirements.txt && \
   echo "Upgrading pip..." && \
     pip3 install --upgrade pip && \
   echo "Building wheels for requirements..." && \
@@ -106,7 +108,7 @@ RUN \
           autoformat nut.pyproj nut.sln nut_gui.py tasks.py requirements_dev.txt setup.cfg pytest.ini *.md && \
     rm -rf /tmp/*
 
-# Build nut
+# Setup nut image
 FROM python-${TARGETARCH:-amd64}${TARGETVARIANT}
 
 ARG TITLEDB_URL
@@ -158,7 +160,7 @@ RUN \
 COPY rootfs/ /
 
 # Define mountable directories
-VOLUME ["/nut/titles", "/nut/conf", "/nut/_NSPOUT"]
+VOLUME ["/nut/titles", "/nut/conf", "/nut/_NSPOUT", "/nut/titledb"]
 
 # Expose ports
 EXPOSE 9000

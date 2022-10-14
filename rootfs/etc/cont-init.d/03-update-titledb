@@ -2,7 +2,7 @@
 
 USER_ID=${USER_ID:-1000}
 GROUP_ID=${GROUP_ID:-1000}
-TITLEDB_UPDATE=${UPDATE_TITLEDB:-true}
+TITLEDB_UPDATE=${TITLEDB_UPDATE:-true}
 TITLEDB_URL=${TITLEDB_URL:-https://github.com/blawar/titledb}
 TITLEDB_REGION=${TITLEDB_REGION:-US}
 TITLEDB_LANGUAGE=${TITLEDB_LANGUAGE:-en}
@@ -16,11 +16,13 @@ if [ "$TITLEDB_UPDATE" = true ]; then
     if [ ! -d "/nut/titledb/.git" ]; then
         echo "Getting titledb, this will take some time..."
         rm -rf /nut/titledb/*
+        rm -rf /nut/titledb/.*
         git clone --depth 1 "$TITLEDB_URL" /nut/titledb
         echo "Adjusting ownership of /nut/titledb folder..."
         chown -R $USER_ID:$GROUP_ID /nut/titledb
     else
         echo "Updating titledb, this might take some time..."
+        git config --global --add safe.directory /nut/titledb
         git -C /nut/titledb pull
     fi
     echo "Importing titledb..."
