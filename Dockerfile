@@ -16,8 +16,6 @@ ARG NUT_BRANCH=tags/v3.3
 ARG NUT_RELEASE=https://github.com/blawar/nut/archive/refs/${NUT_BRANCH}.tar.gz
 ARG TITLEDB_URL=https://github.com/blawar/titledb
 
-ARG CARGO_WORKAROUND="false"
-
 # Set base images with s6 overlay download variable (necessary for multi-arch building via GitHub workflows)
 FROM python:${PYTHON_VERSION} as python-amd64
 
@@ -36,14 +34,12 @@ FROM python:${PYTHON_VERSION} as python-armv6
 ARG S6_OVERLAY_VERSION
 ARG S6_OVERLAY_BASE_URL
 ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-armhf.tar.gz"
-ENV CARGO_WORKAROUND="true"
 
 FROM python:${PYTHON_VERSION} as python-armv7
 
 ARG S6_OVERLAY_VERSION
 ARG S6_OVERLAY_BASE_URL
 ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-arm.tar.gz"
-ENV CARGO_WORKAROUND="true"
 
 FROM python:${PYTHON_VERSION} as python-arm64
 
@@ -61,7 +57,6 @@ ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-ppc64le.tar.gz"
 FROM python-${TARGETARCH:-amd64}${TARGETVARIANT} as builder
 
 ARG NUT_RELEASE
-ARG CARGO_WORKAROUND
 
 # Change working dir
 WORKDIR /nut
@@ -81,10 +76,8 @@ RUN \
       cargo \
       rust \
       zlib-dev && \
-  if [[ "${CARGO_WORKAROUND}" == "true" ]]; then \
     echo "Fixing armv6 and armv7 build by cloning cargo index manually" && \
-      git clone --bare https://github.com/rust-lang/crates.io-index.git ~/.cargo/registry/index/github.com-1285ae84e5963aae; \
-  fi
+      git clone --bare https://github.com/rust-lang/crates.io-index.git ~/.cargo/registry/index/github.com-1285ae84e5963aae
 
 # Download NUT
 ADD ${NUT_RELEASE} /tmp/nut.tar.gz
