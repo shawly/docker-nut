@@ -39,7 +39,7 @@ The architectures supported by this image are:
 |    arm64     | [working](https://github.com/shawly/docker-nut/issues/3) |
 |    armv7     | untested                                                 |
 |    armhf     | untested                                                 |
-|   ppc64le    | untested                                                 |
+|   ppc64le    | dropped                                                  |
 
 _I'm declaring the arm images as **untested** because I only own an older first generation RaspberryPi Model B+ I can't properly test the image on other devices, technically it should work on all RaspberryPi models and similar SoCs. While emulating the architecture with qemu works and can be used for testing, I can't guarantee that there will be no issues, just try it._
 
@@ -57,6 +57,7 @@ docker run -d \
     -v $HOME/nut/titles:/nut/titles:rw \
     -v $HOME/nut/conf:/nut/conf:rw \
     -v $HOME/nut/_NSPOUT:/nut/_NSPOUT:rw \
+    -v $HOME/nut/titledb:/nut/titledb:rw \
     shawly/nut
 ```
 
@@ -65,6 +66,7 @@ Where:
 - `$HOME/nut/titles`: This location contains nsp files.
 - `$HOME/nut/conf`: This location contains the config files for NUT.
 - `$HOME/nut/_NSPOUT`: This location contains the nsp files packed by NUT.
+- `$HOME/nut/titledb`: This location contains the titledb.
 
 ## Usage
 
@@ -112,7 +114,8 @@ format: `<HOST_DIR>:<CONTAINER_DIR>[:PERMISSIONS]`.
 | -------------- | ----------- | ------------------------------------------------------- |
 | `/nut/titles`  | rw          | This is the path NUT will use to scan for nsps.         |
 | `/nut/conf`    | rw          | This is the path NUT will use to read its config files. |
-| `/nut/_NSPOUT` | rw          | This is the path NUT use for outputting nsp files.      |
+| `/nut/_NSPOUT` | rw          | This is the path NUT uses for outputting nsp files.     |
+| `/nut/titledb` | rw          | This is the path NUT stores the titledb.                |
 
 **Note**: You can also use `/nut/titledb` within a separate bind mount or volume so your titledb is persisted between recreation of your container, this improves startup time.
 
@@ -176,6 +179,7 @@ services:
       - "$HOME/nut/titles:/nut/titles:rw"
       - "$HOME/nut/conf:/nut/conf:rw"
       - "$HOME/nut/_NSPOUT:/nut/_NSPOUT:rw"
+      - "$HOME/nut/titledb:/nut/titledb:rw"
 ```
 
 ## Docker Image Update
@@ -244,3 +248,7 @@ You can ignore this.
 
 This means your folder permissions are not correct or rather the folders are owned by a user that has a uid different from `1000`, see [User/Group IDs](#usergroup-ids).
 Beware, if you have the environment variable `FIX_OWNERSHIP` set to `true` and change the `USER_ID` or `GROUP_ID` your volume's ownership will be changed!
+
+### The log says `AttributeError: module 'collections' has no attribute 'Mapping'`
+
+This is a bug that happens with NUT v3.3 when you use a `nut.conf` to store your settings, NUT seems to have an issue merging the `nut.default.conf` and your own `nut.conf`. The workaround for this is to remove the `nut.conf` file and make your changes in the `nut.default.conf`.
