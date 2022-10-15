@@ -82,17 +82,18 @@ jobs:
         [ ${{ github.ref }} == refs/pull/* ] && VERSION_FULL=pr-${{ github.event.number }}
 
         TAGS="${DOCKER_IMAGE}:${VERSION_FULL}"  
-        [ "$VERSION_FULL" != "edge" -a ${VERSION_FULL:0:3} != "pr-" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_MINOR},${DOCKER_IMAGE}:${VERSION_MAJOR},${DOCKER_IMAGE}:latest"
+        [ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_MINOR},${DOCKER_IMAGE}:${VERSION_MAJOR},${DOCKER_IMAGE}:latest"
+        [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_FULL}-${COMMIT_REF_SHORT}"
 
-        echo ::set-output name=version::${VERSION_FULL}
-        echo ::set-output name=tags::${TAGS}
-        echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+        echo "version=${VERSION_FULL}" >> $GITHUB_OUTPUT
+        echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+        echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
     - name: Cache Docker layers
       uses: actions/cache@v3
       with:
         path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        key: ${{ runner.os }}-buildx-$COMMIT_REF_SHORT
         restore-keys: |
           ${{ runner.os }}-buildx-
 

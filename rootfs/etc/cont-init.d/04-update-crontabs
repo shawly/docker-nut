@@ -1,0 +1,51 @@
+#!/usr/bin/with-contenv bash
+
+EXECUTE_CRON="${EXECUTE_CRON:-true}"
+NUT_API_SCHEDULES="${NUT_API_SCHEDULES:-[]}"
+USERS_CONF="/nut/conf/users.conf"
+
+echo '
+-------------------------------------
+Updating /etc/crontabs/root...
+-------------------------------------'
+
+if [ "$EXECUTE_CRON" = "true" ] && [ -f "${USERS_CONF}" ]; then
+    echo "Checking if there is a crontab user in your users.conf..."
+    while IFS= read -r LINE || [[ -n "$LINE" ]]; do
+        if [[ "$LINE" =~ "crontab|"* ]]; then
+            export CRONTAB_USER=$(echo "${LINE}" | tr "|" ":")
+        fi
+    done < "$USERS_CONF"
+
+    if [[ -z "${CRONTAB_USER}" ]]; then
+        echo "Couldn't find crontab user in your users.conf, adding it..."
+        echo "" >> "$USERS_CONF"
+        export USERS_CONF_ENTRY="crontab|$(echo $RANDOM | md5sum | head -c 20)"
+        sed -i -e '$a'"$USERS_CONF_ENTRY" "$USERS_CONF"
+        export CRONTAB_USER=$(echo "${CRONTAB_USER}" | tr "|" ":")
+    else
+        echo "Found crontab user!"
+    fi
+
+    echo ""
+    # reset crontabs file
+    echo "" > /etc/crontabs/root
+
+    # iterate over array
+    echo "${NUT_API_SCHEDULES}" | jq -c -r '.[]' | while read row; do
+        cmd=$(echo "${row}" | jq -r 'to_entries|map("\(.key)")|.[]')
+        schedule=$(echo "${row}" | jq -r 'to_entries|map("\(.value|tostring)")|.[]')
+
+        echo "Found schedule for command ${cmd}: ${schedule}"
+        echo "${schedule} curl --silent --user ${CRONTAB_USER} -L http://localhost:9000/api/${cmd} > /dev/null" > /etc/crontabs/root
+        echo "Added scan schedule to /etc/crontabs/root..."
+    done
+else
+    echo "" > /etc/crontabs/root
+    echo "EXECUTE_CRON was disabled, skipping titledb update."
+fi
+
+echo "
+Done.
+-------------------------------------
+"

@@ -1,7 +1,7 @@
 #!/usr/bin/with-contenv bash
 
-USER_ID=${USER_ID:-1000}
-GROUP_ID=${GROUP_ID:-1000}
+USER_ID="${USER_ID:-1000}"
+GROUP_ID="${GROUP_ID:-1000}"
 
 echo '
 -------------------------------------
@@ -39,14 +39,21 @@ fi
 
 if ! diff /nut/conf/blacklist.online.txt /nut/conf_template/blacklist.online.txt > /dev/null; then
   echo ""
-  echo "blacklist.online.txt has been updated! Saving as blacklist.online.txt.new..."
-  cp -vf /nut/conf_template/blacklist.online.txt /nut/conf/blacklist.online.txt.new
-  echo "Make sure to adjust your blacklist.online.txt or override it with the new one."
+  echo "blacklist.online.txt has been updated! Saving as blacklist.online.txt..."
+  cp -vf /nut/conf/blacklist.online.txt /nut/conf/blacklist.online.txt.old_$(date +%Y%m%d)
+  cp -vf /nut/conf_template/blacklist.online.txt /nut/conf/blacklist.online.txt
+  echo "If you made manual changes to your blacklist.online.txt make sure to merge your changes."
+fi
+
+if [ ! -f "/nut/conf/keys.txt" ]; then
+  echo ""
+  echo "keys.txt not found! Copying keys_template.txt..."
+  cp -v /nut/keys_template.txt /nut/conf/keys_template.txt
 fi
 
 echo ""
 echo "Changing ownership of /nut/conf folder..."
-chown -R $USER_ID:$GROUP_ID /nut/conf
+chown -R "$USER_ID":"$GROUP_ID" /nut/conf
 
 echo '
 -------------------------------------

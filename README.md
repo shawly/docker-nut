@@ -26,7 +26,8 @@ NUT by [blawar](https://github.com/blawar/nut).
   - [Docker Compose File](#docker-compose-file)
   - [Docker Image Update](#docker-image-update)
   - [User/Group IDs](#usergroup-ids)
-  - [Support or Contact](#support-or-contact)
+  - [Using the NUT API](#using-the-nut-api)
+  - [Troubleshooting](#troubleshooting)
 
 ## Supported Architectures
 
@@ -92,17 +93,18 @@ To customize some properties of the container, the following environment
 variables can be passed via the `-e` parameter (one for each variable). Value
 of this parameter has the format `<VARIABLE_NAME>=<VALUE>`.
 
-| Variable           | Description                                                                                                                                                                                                                                                        | Default                             |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
-| `USER_ID`          | ID of the user the application runs as. See [User/Group IDs](#usergroup-ids) to better understand when this should be set.                                                                                                                                         | `1000`                              |
-| `GROUP_ID`         | ID of the group the application runs as. See [User/Group IDs](#usergroup-ids) to better understand when this should be set.                                                                                                                                        | `1000`                              |
-| `TZ`               | [TimeZone] of the container. Timezone can also be set by mapping `/etc/localtime` between the host and the container.                                                                                                                                              | `Etc/UTC`                           |
-| `UMASK`            | This sets the umask for the crafty control process in the container.                                                                                                                                                                                               | `022`                               |
-| `FIX_OWNERSHIP`    | This executes a script which checks if the USER_ID & GROUP_ID changed from the default of 1000 and fixes the ownership of the /nut folder if necessary, otherwise nut wont't start. It's recommended to leave this enabled if you changed the USER_ID or GROUP_ID. | `true`                              |
-| `TITLEDB_UPDATE`   | If the container should update the titledb when starting.                                                                                                                                                                                                          | `true`                              |
-| `TITLEDB_URL`      | Git repository from which the titledb should be pulled. (If you change this URL you need to remove the /nut/titledb folder within your container!)                                                                                                                 | `https://github.com/blawar/titledb` |
-| `TITLEDB_REGION`   | Region to be used when importing the titledb.                                                                                                                                                                                                                      | `true`                              |
-| `TITLEDB_LANGUAGE` | Language to be used when importing the titledb.                                                                                                                                                                                                                    | `true`                              |
+| Variable            | Description                                                                                                                                                                                                                                                        | Default                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| `USER_ID`           | ID of the user the application runs as. See [User/Group IDs](#usergroup-ids) to better understand when this should be set.                                                                                                                                         | `1000`                              |
+| `GROUP_ID`          | ID of the group the application runs as. See [User/Group IDs](#usergroup-ids) to better understand when this should be set.                                                                                                                                        | `1000`                              |
+| `TZ`                | [TimeZone] of the container. Timezone can also be set by mapping `/etc/localtime` between the host and the container.                                                                                                                                              | `Etc/UTC`                           |
+| `UMASK`             | This sets the umask for the crafty control process in the container.                                                                                                                                                                                               | `022`                               |
+| `FIX_OWNERSHIP`     | This executes a script which checks if the USER_ID & GROUP_ID changed from the default of 1000 and fixes the ownership of the /nut folder if necessary, otherwise nut wont't start. It's recommended to leave this enabled if you changed the USER_ID or GROUP_ID. | `true`                              |
+| `TITLEDB_UPDATE`    | If the container should update the titledb when starting.                                                                                                                                                                                                          | `true`                              |
+| `TITLEDB_URL`       | Git repository from which the titledb should be pulled. (If you change this URL you need to remove the /nut/titledb folder within your container!)                                                                                                                 | `https://github.com/blawar/titledb` |
+| `TITLEDB_REGION`    | Region to be used when importing the titledb.                                                                                                                                                                                                                      | `true`                              |
+| `TITLEDB_LANGUAGE`  | Language to be used when importing the titledb.                                                                                                                                                                                                                    | `true`                              |
+| `NUT_API_SCHEDULES` | A json array with crontab schedules for calling api commands. The default value sets a cron schedule that runs a scan every 30 minutes. To disable scheduled api calls set this to `[]`. Check [Using the NUT API](#using-the-nut-api) down below for more info.   | `[{"scan": "0/30 * * * *"}]`        |
 
 ### Data Volumes
 
@@ -173,6 +175,7 @@ services:
       - GROUP_ID: 9000
       - TITLEDB_REGION: US
       - TITLEDB_LANGUAGE: en
+      - NUT_API_SCHEDULES: "[{"scan":"0/30 * * * *}]"
     ports:
       - "9000:9000"
     volumes:
@@ -233,12 +236,63 @@ uid=1000(myuser) gid=1000(myuser) groups=1000(myuser),4(adm),24(cdrom),27(sudo),
 The value of `uid` (user ID) and `gid` (group ID) are the ones that you should
 be given the container.
 
+## Using the NUT API
+
+NUT provides an API for executing certain commands like scan and organize.
+
+Replace http://localhost:9000 with the actual address to your NUT instance.
+
+### Organize NSPs
+
+Call [`http://localhost:9000/api/organize`](http://localhost:9000/api/organize)
+
+### Scan for new NSPs
+
+Call [`http://localhost:9000/api/scan`](http://localhost:9000/api/scan)
+
+### Automated scans
+
+With the latest `edge` image you can run automated schedules by configuring the `NUT_API_SCHEDULES` variable.
+
+The default is set to `[{"scan": "0/30 * * * *"}]`, which calls `http://localhost:9000/api/scan` every full 30 minutes which will trigger a scan.
+
+#### Format
+
+The format is set up like this:
+
+```json
+[
+  {
+    "command": "min hour day month weekday"
+  }
+]
+```
+
+#### Example
+
+If you wanted for example to scan and organize your NSPs automatically every 15 minutes, your configuration would look like this:
+
+```json
+[
+  {
+    "scan": "0/15 * * * *"
+  },
+  {
+    "organize": "0/20 * * * *"
+  }
+]
+```
+
+So your `NUT_API_SCHEDULES` value would look like this `[{"scan":"0/15 * * * *"},{"organize":"0/20 * * * *"}]`. This would now run the scan every 15 minutes and the organize command every 20 minutes.
+
+If you use Docker Compose and define your environment variables in yaml format, make sure to use the compact format so that there is no space after the colons (`:`)!
+
 ## Troubleshooting
 
 ### The log says `could not load keys.txt, all crypto operations will fail`
 
 If you just want to serve titles for your Switch you don't need the keys.txt at all.
-Otherwise you can extract the keys.txt via biskeydump and Lockpick or find them on the internet, I won't provide any links however use Google.
+Otherwise you can extract the keys.txt via biskeydump and Lockpick or find them on the internet, I won't provide any links however, use Google.
 
 ### The log says `titledb/db.nza unknown extension titledb/db.nza`
 

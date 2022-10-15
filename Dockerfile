@@ -16,6 +16,8 @@ ARG NUT_BRANCH=tags/v3.3
 ARG NUT_RELEASE=https://github.com/blawar/nut/archive/refs/${NUT_BRANCH}.tar.gz
 ARG TITLEDB_URL=https://github.com/blawar/titledb
 
+ARG CARGO_WORKAROUND="false"
+
 # Set base images with s6 overlay download variable (necessary for multi-arch building via GitHub workflows)
 FROM python:${PYTHON_VERSION} as python-amd64
 
@@ -34,12 +36,14 @@ FROM python:${PYTHON_VERSION} as python-armv6
 ARG S6_OVERLAY_VERSION
 ARG S6_OVERLAY_BASE_URL
 ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-armhf.tar.gz"
+ENV CARGO_WORKAROUND="true"
 
 FROM python:${PYTHON_VERSION} as python-armv7
 
 ARG S6_OVERLAY_VERSION
 ARG S6_OVERLAY_BASE_URL
 ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-arm.tar.gz"
+ENV CARGO_WORKAROUND="true"
 
 FROM python:${PYTHON_VERSION} as python-arm64
 
@@ -57,6 +61,7 @@ ENV S6_OVERLAY_RELEASE="${S6_OVERLAY_BASE_URL}/s6-overlay-ppc64le.tar.gz"
 FROM python-${TARGETARCH:-amd64}${TARGETVARIANT} as builder
 
 ARG NUT_RELEASE
+ARG CARGO_WORKAROUND
 
 # Change working dir
 WORKDIR /nut
@@ -76,10 +81,10 @@ RUN \
       cargo \
       rust \
       zlib-dev && \
-  echo "Fixing armv6 and armv7 build by cloning cargo index manually" && \
-    git clone --bare https://github.com/rust-lang/crates.io-index.git ~/.cargo/registry/index/github.com-1285ae84e5963aae && \
-  echo "Cleaning up directories..." && \
-    rm -rf /tmp/*
+  if [[ "${CARGO_WORKAROUND}" == "true" ]]; then \
+    echo "Fixing armv6 and armv7 build by cloning cargo index manually" && \
+      git clone --bare https://github.com/rust-lang/crates.io-index.git ~/.cargo/registry/index/github.com-1285ae84e5963aae; \
+  fi
 
 # Download NUT
 ADD ${NUT_RELEASE} /tmp/nut.tar.gz
@@ -94,8 +99,6 @@ RUN \
   echo "Removing pyqt5 from requirements.txt since we have no gui..." && \
     sed -i '/pyqt5/d' requirements.txt && \
     sed -i '/qt-range-slider/d' requirements.txt && \
-  echo "Fixing markupsafe issue..." && \
-    echo "markupsafe==2.0.1" >> requirements.txt && \
   echo "Upgrading pip..." && \
     pip3 install --upgrade pip && \
   echo "Setup venv..." && \
@@ -108,7 +111,7 @@ RUN \
     mv -v conf conf_template && \
     mkdir -p conf _NSPOUT titles && \
   echo "Cleaning up directories..." && \
-    rm -rf .github windows_driver gui tests tests-gui && \
+    rm -rf .github windows_driver gui tests tests-gui images && \
     rm -f .coveragerc .editorconfig .gitignore .pep8 .pylintrc .pre-commit-config.yaml \
           autoformat nut.pyproj nut.sln nut_gui.py tasks.py requirements_dev.txt setup.cfg pytest.ini *.md
 
@@ -123,7 +126,8 @@ ENV UMASK=022 \
     TITLEDB_URL=${TITLEDB_URL} \
     TITLEDB_REGION=US \
     TITLEDB_LANGUAGE=en \
-    PATH="/nut/venv/bin:$PATH"
+    PATH="/nut/venv/bin:$PATH" \
+    NUT_API_SCHEDULES='[{"scan": "0/30 * * * *"}]'
 
 # Download S6 Overlay
 ADD ${S6_OVERLAY_RELEASE} /tmp/s6overlay.tar.gz
@@ -146,6 +150,8 @@ RUN \
       libjpeg-turbo \
       tzdata \
       diffutils \
+      sed \
+      jq \
       git && \
   echo "Extracting s6 overlay..." && \
     tar xzf /tmp/s6overlay.tar.gz -C / && \

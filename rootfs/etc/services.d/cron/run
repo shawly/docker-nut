@@ -1,0 +1,3 @@
+#!/usr/bin/with-contenv sh
+
+exec crond -l 7 -f
