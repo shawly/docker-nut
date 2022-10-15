@@ -17,7 +17,9 @@ env:
   IMAGE_NAME: nut
   IMAGE_TITLE: NUT
   IMAGE_DESCRIPTION: Docker container for NUT, a network server for Tinfoil
-  APP_VERSION: 3.3
+  APP_VERSION: "3.3"
+  COMMIT_REF: "7f3a0a307da7bb95e5beca13dd882d9270f51d56"
+  COMMIT_REF_SHORT: "7f3a0a3"
 
 jobs:
   # Run tests.
@@ -101,7 +103,7 @@ jobs:
       with:
         builder: ${{ steps.buildx.outputs.name }}
         context: .
-        platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6,linux/ppc64le
+        platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.prep.outputs.tags }}
         labels: |
