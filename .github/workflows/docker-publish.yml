@@ -5,6 +5,7 @@ on:
     # Publish `main` as Docker `edge` image.
     branches:
       - main
+      - release/*
 
     # Publish `v1.2.3` tags as releases.
     tags:
@@ -65,6 +66,7 @@ jobs:
 
   # Build images.
   build:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     needs: test
@@ -85,14 +87,12 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Login to DockerHub
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Prepare
-        if: github.event_name != 'pull_request'
         id: prep
         run: |
           DOCKER_IMAGE=${{ github.repository_owner }}/$IMAGE_NAME
@@ -108,25 +108,35 @@ jobs:
 
           # Build all tags
           TAGS="${DOCKER_IMAGE}:${VERSION_FULL}"
-          [ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_MINOR},${DOCKER_IMAGE}:${VERSION_MAJOR},${DOCKER_IMAGE}:latest"
-          [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_FULL}-${COMMIT_REF_SHORT},${DOCKER_IMAGE}:${VERSION_FULL}-${COMMIT_REF}"
+          [ "$VERSION_FULL" != "edge" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_MINOR},${DOCKER_IMAGE}:${VERSION_MAJOR},${DOCKER_IMAGE}:latest"
+          [ "$VERSION_FULL" == "edge" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_FULL}-${COMMIT_REF_SHORT},${DOCKER_IMAGE}:${VERSION_FULL}-${COMMIT_REF}"
 
           # Build tags for README.md
-          [ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && README_TAGS="\`latest\`, \`${VERSION_MAJOR}\`, \`${VERSION_MINOR}\`, \`${VERSION_FULL}\`"
-          [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && README_TAGS="\`${VERSION_FULL}\`, \`${VERSION_FULL}-${COMMIT_REF_SHORT}\`, \`${VERSION_FULL}-${COMMIT_REF}\`"
+          [ "$VERSION_FULL" != "edge" ] && README_TAGS="\`latest\`, \`${VERSION_MAJOR}\`, \`${VERSION_MINOR}\`, \`${VERSION_FULL}\`"
+          [ "$VERSION_FULL" == "edge" ] && README_TAGS="\`${VERSION_FULL}\`, \`${VERSION_FULL}-${COMMIT_REF_SHORT}\`, \`${VERSION_FULL}-${COMMIT_REF}\`"
 
           # Replace supported latest tags in README.md
-          if [ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ]; then
+          if [ "$VERSION_FULL" != "edge" ]; then
               sed -i '/- `latest`.*<!-- latest tag -->/c- '"${README_TAGS}"' <!-- latest tag -->' README.md
           fi
           # Replace supported edge tags in README.md
-          if [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ]; then
+          if [ "$VERSION_FULL" == "edge" ]; then
               sed -i '/- `edge`.*<!-- edge tag -->/c- '"${README_TAGS}"' <!-- edge tag -->' README.md
           fi
+
+          # Use Docker `edge` tag convention and pr-<number> for pull requests
+          [ "$VERSION_FULL" == "main" ] && VERSION_FULL=edge
+          [ ${{ github.ref }} == refs/pull/* ] && VERSION_FULL=pr-${{ github.event.number }}
+
+          # Build tags for README.md
+          [ "$VERSION_FULL" != "edge" ] && README_TAGS="\`latest\`, \`${VERSION_MAJOR}\`, \`${VERSION_MINOR}\`, \`${VERSION_FULL}\`"
+          [ "$VERSION_FULL" == "edge" ] && README_TAGS="\`${VERSION_FULL}\`, \`${VERSION_FULL}-${COMMIT_REF_SHORT}\`, \`${VERSION_FULL}-${COMMIT_REF}\`"
 
           echo "version=${VERSION_FULL}" >> $GITHUB_OUTPUT
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          echo "readme_tags=${README_TAGS}" >> $GITHUB_OUTPUT
+          echo "release=${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags') }}" >> $GITHUB_OUTPUT
 
       - name: Cache Docker layers
         uses: actions/cache@v3
@@ -138,14 +148,13 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Build and push
-        if: github.event_name != 'pull_request'
         id: docker_build
         uses: docker/build-push-action@v3
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
           platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ steps.prep.outputs.release == 'true' }}
           tags: ${{ steps.prep.outputs.tags }}
           labels: |
             org.opencontainers.image.title=$IMAGE_TITLE
@@ -160,42 +169,31 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Checkout main
-        if: github.event_name != 'pull_request'
-        run: git checkout main
+        if: steps.prep.outputs.release == 'true'
+        uses: actions/checkout@v3
+        with:
+          ref: main
 
       - name: Update README.md
-        if: github.event_name != 'pull_request'
+        if: steps.prep.outputs.release == 'true'
         id: update-readme
         run: |
-          # Strip git ref prefix from version
-          VERSION_FULL=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\)$,\1,')
-          VERSION_MINOR=$(echo "$VERSION_FULL" | sed 's,\.[^.]*$,,')
-          VERSION_MAJOR=$(echo "$VERSION_MINOR" | sed 's,\.[^.]*$,,')
-
-          # Use Docker `edge` tag convention and pr-<number> for pull requests
-          [ "$VERSION_FULL" == "main" ] && VERSION_FULL=edge
-          [ ${{ github.ref }} == refs/pull/* ] && VERSION_FULL=pr-${{ github.event.number }}
-
-          # Build tags for README.md
-          [ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && README_TAGS="\`latest\`, \`${VERSION_MAJOR}\`, \`${VERSION_MINOR}\`, \`${VERSION_FULL}\`"
-          [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && README_TAGS="\`${VERSION_FULL}\`, \`${VERSION_FULL}-${COMMIT_REF_SHORT}\`, \`${VERSION_FULL}-${COMMIT_REF}\`"
-
           # Replace supported latest tags in README.md
-          if [ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ]; then
-              sed -i '/- `latest`.*<!-- latest tag -->/c- '"${README_TAGS}"' <!-- latest tag -->' README.md
+          if [ "${{ steps.prep.outputs.version }}" != "edge" ]; then
+              sed -i '/- `latest`.*<!-- latest tag -->/c- ${{ steps.prep.outputs.readme_tags }} <!-- latest tag -->' README.md
           fi
           # Replace supported edge tags in README.md
-          if [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ]; then
-              sed -i '/- `edge`.*<!-- edge tag -->/c- '"${README_TAGS}"' <!-- edge tag -->' README.md
+          if [ "${{ steps.prep.outputs.version }}" == "edge" ]; then
+              sed -i '/- `edge`.*<!-- edge tag -->/c- ${{ steps.prep.outputs.readme_tags }} <!-- edge tag -->' README.md
           fi
 
       - name: Check for modified files
-        if: github.event_name != 'pull_request'
+        if: steps.prep.outputs.release == 'true'
         id: git-check
         run: echo modified=$([ -z "`git status --porcelain`" ] && echo "false" || echo "true") >> $GITHUB_OUTPUT
 
       - name: Commit updated README.md
-        if: steps.git-check.outputs.modified == 'true' && github.event_name != 'pull_request'
+        if: steps.git-check.outputs.modified == 'true' && steps.prep.outputs.release == 'true'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
