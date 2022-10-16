@@ -31,19 +31,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Set up Docker Buildx
+        id: buildx_test
+        uses: docker/setup-buildx-action@v2
+
       - name: Cache Docker layers
         uses: actions/cache@v3
         with:
           path: /tmp/.test-buildx-cache
-          key: ${{ runner.os }}-test-buildx-$COMMIT_REF_SHORT
+          key: ${{ runner.os }}-test-buildx-${{ env.COMMIT_REF_SHORT }}
           restore-keys: |
+            ${{ runner.os }}-test-buildx-${{ env.COMMIT_REF_SHORT }}
             ${{ runner.os }}-test-buildx-
 
       - name: Test build
         id: docker_build_test
         uses: docker/build-push-action@v3
         with:
+          builder: ${{ steps.buildx_test.outputs.name }}
           context: .
+          platforms: linux/amd64
           push: false
           cache-from: type=local,src=/tmp/.test-buildx-cache
           cache-to: type=local,dest=/tmp/.test-buildx-cache-new
@@ -125,8 +132,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-$COMMIT_REF_SHORT
+          key: ${{ runner.os }}-buildx-${{ env.COMMIT_REF_SHORT }}
           restore-keys: |
+            ${{ runner.os }}-buildx-${{ env.COMMIT_REF_SHORT }}
             ${{ runner.os }}-buildx-
 
       - name: Build and push
