@@ -12,7 +12,7 @@ ARG S6_OVERLAY_VERSION=v2.2.0.3
 ARG S6_OVERLAY_BASE_URL=https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}
 
 # Set NUT vars
-ARG NUT_BRANCH=tags/v3.3
+ARG NUT_BRANCH=heads/master
 ARG NUT_RELEASE=https://github.com/blawar/nut/archive/refs/${NUT_BRANCH}.tar.gz
 ARG TITLEDB_URL=https://github.com/blawar/titledb
 
