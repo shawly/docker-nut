@@ -24,10 +24,11 @@ if [ "$TITLEDB_UPDATE" = true ]; then
         echo "Updating titledb, this might take some time..."
         cd /nut/titledb
         git config --global --add safe.directory /nut/titledb
-        get fetch origin
+        git fetch origin
         git clean -fdx
         git reset --hard HEAD
         git pull
+        chown -R "$USER_ID":"$GROUP_ID" /nut/titledb
     fi
     echo "Importing titledb..."
     cd /nut
