@@ -91,11 +91,11 @@ jobs:
           [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && README_TAGS="\`${VERSION_FULL}\`, \`${VERSION_FULL}-${COMMIT_REF_SHORT}\`, \`${VERSION_FULL}-${COMMIT_REF}\`"
 
           # Replace supported latest tags in README.md
-          if [[ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ]]; then
+          if [ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ]; then
               sed -i '/- `latest`.*<!-- latest tag -->/c- '"${README_TAGS}"' <!-- latest tag -->' README.md
           fi
           # Replace supported edge tags in README.md
-          if [[ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ]]; then
+          if [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ]; then
               sed -i '/- `edge`.*<!-- edge tag -->/c- '"${README_TAGS}"' <!-- edge tag -->' README.md
           fi
 
