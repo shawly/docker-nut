@@ -47,82 +47,109 @@ jobs:
     needs: test
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
-      with:
-        platforms: all
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
 
-    - name: Set up Docker Buildx
-      id: buildx
-      uses: docker/setup-buildx-action@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
 
-    - name: Login to DockerHub
-      if: github.event_name != 'pull_request'
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to DockerHub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Prepare
-      if: github.event_name != 'pull_request'
-      id: prep
-      run: |
-        DOCKER_IMAGE=${{ github.repository_owner }}/$IMAGE_NAME
+      - name: Prepare
+        if: github.event_name != 'pull_request'
+        id: prep
+        run: |
+          DOCKER_IMAGE=${{ github.repository_owner }}/$IMAGE_NAME
 
-        # Strip git ref prefix from version
-        VERSION_FULL=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\)$,\1,')
-        VERSION_MINOR=$(echo "$VERSION_FULL" | sed 's,\.[^.]*$,,')
-        VERSION_MAJOR=$(echo "$VERSION_MINOR" | sed 's,\.[^.]*$,,')
+          # Strip git ref prefix from version
+          VERSION_FULL=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\)$,\1,')
+          VERSION_MINOR=$(echo "$VERSION_FULL" | sed 's,\.[^.]*$,,')
+          VERSION_MAJOR=$(echo "$VERSION_MINOR" | sed 's,\.[^.]*$,,')
 
-        # Use Docker `edge` tag convention and pr-<number> for pull requests
-        [ "$VERSION_FULL" == "main" ] && VERSION_FULL=edge
-        [ ${{ github.ref }} == refs/pull/* ] && VERSION_FULL=pr-${{ github.event.number }}
+          # Use Docker `edge` tag convention and pr-<number> for pull requests
+          [ "$VERSION_FULL" == "main" ] && VERSION_FULL=edge
+          [ ${{ github.ref }} == refs/pull/* ] && VERSION_FULL=pr-${{ github.event.number }}
 
-        TAGS="${DOCKER_IMAGE}:${VERSION_FULL}"  
-        [ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_MINOR},${DOCKER_IMAGE}:${VERSION_MAJOR},${DOCKER_IMAGE}:latest"
-        [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_FULL}-${COMMIT_REF_SHORT}"
+          # Build all tags
+          TAGS="${DOCKER_IMAGE}:${VERSION_FULL}"
+          [ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_MINOR},${DOCKER_IMAGE}:${VERSION_MAJOR},${DOCKER_IMAGE}:latest"
+          [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_FULL}-${COMMIT_REF_SHORT},${DOCKER_IMAGE}:${VERSION_FULL}-${COMMIT_REF}"
 
-        echo "version=${VERSION_FULL}" >> $GITHUB_OUTPUT
-        echo "tags=${TAGS}" >> $GITHUB_OUTPUT
-        echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          # Build tags for README.md
+          [ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && README_TAGS="\`latest\`, \`${VERSION_MAJOR}\`, \`${VERSION_MINOR}\`, \`${VERSION_FULL}\`"
+          [ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ] && README_TAGS="\`${VERSION_FULL}\`, \`${VERSION_FULL}-${COMMIT_REF_SHORT}\`, \`${VERSION_FULL}-${COMMIT_REF}\`"
 
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-$COMMIT_REF_SHORT
-        restore-keys: |
-          ${{ runner.os }}-buildx-
+          # Replace supported latest tags in README.md
+          if [[ "$VERSION_FULL" != "edge" -a "${VERSION_FULL:0:3}" != "pr-" ]]; then
+              sed -i '/- `latest`.*<!-- latest tag -->/c- '"${README_TAGS}"' <!-- latest tag -->' README.md
+          fi
+          # Replace supported edge tags in README.md
+          if [[ "$VERSION_FULL" == "edge" -a "${VERSION_FULL:0:3}" != "pr-" ]]; then
+              sed -i '/- `edge`.*<!-- edge tag -->/c- '"${README_TAGS}"' <!-- edge tag -->' README.md
+          fi
 
-    - name: Build and push
-      if: github.event_name != 'pull_request'
-      id: docker_build
-      uses: docker/build-push-action@v3
-      with:
-        builder: ${{ steps.buildx.outputs.name }}
-        context: .
-        platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.prep.outputs.tags }}
-        labels: |
-          org.opencontainers.image.title=$IMAGE_TITLE
-          org.opencontainers.image.description=$IMAGE_DESCRIPTION
-          org.opencontainers.image.vendor=${{ github.repository_owner }}
-          org.opencontainers.image.url=${{ github.event.repository.html_url }}
-          org.opencontainers.image.source=${{ github.event.repository.html_url }}
-          org.opencontainers.image.created=${{ steps.prep.outputs.created }}
-          org.opencontainers.image.revision=${{ github.sha }}
-          org.opencontainers.image.version=$APP_VERSION
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new
+          echo "version=${VERSION_FULL}" >> $GITHUB_OUTPUT
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
-    # Temp fix
-    # https://github.com/docker/build-push-action/issues/252
-    # https://github.com/moby/buildkit/issues/1896
-    - name: Move cache
-      run: |
-        rm -rf /tmp/.buildx-cache
-        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-$COMMIT_REF_SHORT
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build and push
+        if: github.event_name != 'pull_request'
+        id: docker_build
+        uses: docker/build-push-action@v3
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.prep.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=$IMAGE_TITLE
+            org.opencontainers.image.description=$IMAGE_DESCRIPTION
+            org.opencontainers.image.vendor=${{ github.repository_owner }}
+            org.opencontainers.image.url=${{ github.event.repository.html_url }}
+            org.opencontainers.image.source=${{ github.event.repository.html_url }}
+            org.opencontainers.image.created=${{ steps.prep.outputs.created }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=$APP_VERSION
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Check for modified files
+        id: git-check
+        run: echo modified=$([ -z "`git status --porcelain`" ] && echo "false" || echo "true") >> $GITHUB_OUTPUT
+
+      - name: Commit updated README.md
+        if: steps.git-check.outputs.modified == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add README.md || true
+          git commit -m "docs(README): update supported tags [skip ci]" || true
+          git push || true
+
+      # Temp fix
+      # https://github.com/docker/build-push-action/issues/252
+      # https://github.com/moby/buildkit/issues/1896
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache

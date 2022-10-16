@@ -16,6 +16,8 @@ NUT by [blawar](https://github.com/blawar/nut).
 
 - [Docker container for nut](#docker-container-for-nut)
   - [Table of Content](#table-of-content)
+  - [Supported tags](#supported-tags)
+  - [Image Variants](#image-variants)
   - [Supported Architectures](#supported-architectures)
   - [Quick Start](#quick-start)
   - [Usage](#usage)
@@ -28,6 +30,29 @@ NUT by [blawar](https://github.com/blawar/nut).
   - [User/Group IDs](#usergroup-ids)
   - [Using the NUT API](#using-the-nut-api)
   - [Troubleshooting](#troubleshooting)
+
+## Supported tags
+
+<!-- supported tags will be auto updated through workflows! -->
+
+- `edge`, `edge-9c726a5` <!-- edge tag -->
+- `latest`, `v3`, `v3.3`, `v3.3.2` <!-- latest tag -->
+
+## Image Variants
+
+This image comes in two different variants.
+
+### `shawly/nut:<version>`
+
+This image represents a stable or considered "working" build of NUT and should be preferred.
+It will be built from a stable state of NUT, e.g. `tags/v3.3`.
+
+### `shawly/nut:edge-<commitsha>`
+
+This image represents a development state of this repo. It contains the latest features but is not considered stable, it can contain bugs and breaking changes.
+If you are not sure what to choose, use the `latest` image or a version like `v3`.
+It will be built from the latest `master` state of NUT.
+`edge` will always be the latest development image. If NUT is updated, the `edge` image will be rebuilt and tagged with the latest commit shortref e.g. `edge-9c726a5`.
 
 ## Supported Architectures
 
