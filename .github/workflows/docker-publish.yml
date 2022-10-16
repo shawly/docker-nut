@@ -31,14 +31,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Run tests
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.test-buildx-cache
+          key: ${{ runner.os }}-test-buildx-$COMMIT_REF_SHORT
+          restore-keys: |
+            ${{ runner.os }}-test-buildx-
+
+      - name: Test build
+        id: docker_build_test
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: false
+          cache-from: type=local,src=/tmp/.test-buildx-cache
+          cache-to: type=local,dest=/tmp/.test-buildx-cache-new
+
+      # Temp fix
+      # https://github.com/docker/build-push-action/issues/252
+      # https://github.com/moby/buildkit/issues/1896
+      - name: Move cache
         run: |
-          if [ -f docker-compose.test.yml ]; then
-            docker-compose --file docker-compose.test.yml build
-            docker-compose --file docker-compose.test.yml run sut
-          else
-            docker build . --file Dockerfile
-          fi
+          rm -rf /tmp/.test-buildx-cache
+          mv /tmp/.test-buildx-cache-new /tmp/.test-buildx-cache
 
   # Build images.
   build:
