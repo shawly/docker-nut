@@ -10,10 +10,10 @@ Checking conf folder...
 if [ ! -f "/nut/conf/nut.default.conf" ]; then
   echo "nut.default.conf not found! Copying..."
   cp -v /nut/conf_template/nut.default.conf /nut/conf/nut.default.conf
-  echo '{}' > /nut/conf/nut.conf
+  echo '{}' >/nut/conf/nut.conf
 fi
 
-if ! diff /nut/conf/nut.default.conf /nut/conf_template/nut.default.conf > /dev/null; then
+if ! diff /nut/conf/nut.default.conf /nut/conf_template/nut.default.conf >/dev/null; then
   echo ""
   echo "nut.default.conf has been altered or updated!"
   echo "To update your default config just remove nut.default.conf and restart the container."
@@ -37,7 +37,7 @@ if [ ! -f "/nut/conf/blacklist.online.txt" ]; then
   cp -v /nut/conf_template/blacklist.online.txt /nut/conf/blacklist.online.txt
 fi
 
-if ! diff /nut/conf/blacklist.online.txt /nut/conf_template/blacklist.online.txt > /dev/null; then
+if ! diff /nut/conf/blacklist.online.txt /nut/conf_template/blacklist.online.txt >/dev/null; then
   echo ""
   echo "blacklist.online.txt has been updated! Saving as blacklist.online.txt..."
   cp -vf /nut/conf/blacklist.online.txt /nut/conf/blacklist.online.txt.old_$(date +%Y%m%d)

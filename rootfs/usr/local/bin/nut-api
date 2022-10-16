@@ -1,0 +1,50 @@
+#!/usr/bin/with-contenv bash
+
+NUT_API_URL="http://localhost:9000/api"
+
+while getopts u:c:a:h flag; do
+    case "${flag}" in
+    u) api_url=${OPTARG} ;;
+    a) auth=${OPTARG} ;;
+    c) command=${OPTARG} ;;
+    h) help=${OPTARG} ;;
+    esac
+done
+
+show_help() {
+    echo "Just a helper script to call the NUT API."
+    echo
+    echo "Syntax: nut-api [-g|h|v|V]"
+    echo "options:"
+    echo "h     Show the help message."
+    echo "u     Custom API url. Otherwise will default to \"http://localhost:9000/api\"."
+    echo "a     Basic authentication in format \"username:password\"."
+    echo "c     API command that will be called."
+    echo
+    exit 1
+}
+
+if [[ -z "${command}" ]]; then
+    echo "Missing -c argument"
+    show_help
+fi
+
+if [[ -z "${auth}" ]]; then
+    echo "Missing -a argument"
+    show_help
+fi
+
+echo "[NUT API Script] Using api url: ${api_url:-$NUT_API_URL}"
+
+response=$(curl -L --silent --user "${auth}" "${api_url:-$NUT_API_URL}/${command}")
+success=$(echo $response | jq '.success')
+result=$(echo $response | jq '.result')
+if [[ "$success" == "true" ]]; then
+    echo "[NUT API Script] Executing ${command} successful!"
+else
+    echo "[NUT API Script] Executing ${command} failed!"
+fi
+if [[ -n "$result" ]] && [[ "$result" != "null" ]]; then
+    echo "[NUT API Script] Result: $result"
+fi
+exit 0

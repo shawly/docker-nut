@@ -22,8 +22,12 @@ if [ "$TITLEDB_UPDATE" = true ]; then
         chown -R "$USER_ID":"$GROUP_ID" /nut/titledb
     else
         echo "Updating titledb, this might take some time..."
+        cd /nut/titledb
         git config --global --add safe.directory /nut/titledb
-        git -C /nut/titledb pull
+        get fetch origin
+        git clean -fdx
+        git reset --hard HEAD
+        git pull
     fi
     echo "Importing titledb..."
     cd /nut
