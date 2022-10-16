@@ -51,6 +51,13 @@ if [ ! -f "/nut/conf/keys.txt" ]; then
   cp -v /nut/keys_template.txt /nut/conf/keys_template.txt
 fi
 
+if [ -f "/nut/conf/keys.txt" ]; then
+  echo ""
+  echo "Found keys.txt! Copying back to /nut..."
+  cp -vf /nut/conf/keys.txt /nut/keys.txt
+  chown "$USER_ID":"$GROUP_ID" /nut/keys.txt
+fi
+
 echo ""
 echo "Changing ownership of /nut/conf folder..."
 chown -R "$USER_ID":"$GROUP_ID" /nut/conf
