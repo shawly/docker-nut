@@ -18,9 +18,9 @@ env:
   IMAGE_NAME: nut
   IMAGE_TITLE: NUT
   IMAGE_DESCRIPTION: Docker container for NUT, a network server for Tinfoil
-  APP_VERSION: "9c726a5"
-  COMMIT_REF: "9c726a527eb1a4c557025fc4cfb09c69fa43b72f"
-  COMMIT_REF_SHORT: "9c726a5"
+  APP_VERSION: "cf3ac28"
+  COMMIT_REF: "cf3ac287d7e3a38eef61c9f34942839be1b87823"
+  COMMIT_REF_SHORT: "cf3ac28"
 
 jobs:
   # Run tests.
