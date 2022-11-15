@@ -92,6 +92,8 @@ RUN \
   echo "Removing pyqt5 from requirements.txt since we have no gui..." && \
     sed -i '/pyqt5/d' requirements.txt && \
     sed -i '/qt-range-slider/d' requirements.txt && \
+  echo "Fixing markupsafe issue..." && \
+    echo "markupsafe==2.0.1" >> requirements.txt && \
   echo "Upgrading pip..." && \
     pip3 install --upgrade pip && \
   echo "Setup venv..." && \
