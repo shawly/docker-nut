@@ -14,7 +14,7 @@ jobs:
         run: |
           export NUT_COMMIT_REF=$(curl -sL https://api.github.com/repos/blawar/NUT/commits/master | jq -r '.sha')
           export NUT_COMMIT_REF_SHORT=${NUT_COMMIT_REF:0:7}
-          if [ -n "$NUT_COMMIT_REF" ]; then
+          if [ -n "$NUT_COMMIT_REF" ] && [ "$NUT_COMMIT_REF" != "null" ]; then
             echo "Updated APP_VERSION with $NUT_COMMIT_REF_SHORT in .github/workflows/docker-publish.yml"
             sed -ri "s/^(\s*)(APP_VERSION\s*:\s*.*\s*$)/\1APP_VERSION: \"$NUT_COMMIT_REF_SHORT\"/" .github/workflows/docker-publish.yml
             sed -ri "s/^(\s*)(COMMIT_REF\s*:\s*.*\s*$)/\1COMMIT_REF: \"$NUT_COMMIT_REF\"/" .github/workflows/docker-publish.yml
