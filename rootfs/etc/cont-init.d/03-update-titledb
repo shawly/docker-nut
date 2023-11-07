@@ -27,7 +27,8 @@ if [ "$TITLEDB_UPDATE" = true ]; then
         git fetch origin
         git clean -fdx
         git reset --hard HEAD
-        git pull
+        git pull --depth 1
+        git gc --prune=all
         chown -R "$USER_ID":"$GROUP_ID" /nut/titledb
     fi
     echo "Importing titledb..."
