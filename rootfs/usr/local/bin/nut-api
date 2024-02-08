@@ -1,6 +1,7 @@
 #!/usr/bin/with-contenv bash
 
 NUT_API_URL="http://localhost:9000/api"
+NUT_API_HELPER_DEBUG="${NUT_API_HELPER_DEBUG:-false}"
 
 while getopts u:c:a:h flag; do
     case "${flag}" in
@@ -43,6 +44,9 @@ if [[ "$success" == "true" ]]; then
     echo "[NUT API Script] Executing ${command} successful!"
 else
     echo "[NUT API Script] Executing ${command} failed!"
+    if [[ "$NUT_API_HELPER_DEBUG" == "true" ]]; then
+        echo "[NUT API Script] Response was: $response"
+    fi
 fi
 if [[ -n "$result" ]] && [[ "$result" != "null" ]]; then
     echo "[NUT API Script] Result: $result"

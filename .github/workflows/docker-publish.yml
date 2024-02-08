@@ -5,11 +5,11 @@ on:
     # Publish `main` as Docker `edge` image.
     branches:
       - main
-      - release/*
+      - 'release/*'
 
     # Publish `v1.2.3` tags as releases.
     tags:
-      - v*
+      - 'v*'
 
   # Run tests for any PRs.
   pull_request:
@@ -92,10 +92,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Prepare
         id: prep
         run: |
-          DOCKER_IMAGE=${{ github.repository_owner }}/$IMAGE_NAME
+          DOCKERIO_IMAGE=docker.io/${{ github.repository_owner }}/$IMAGE_NAME
+          GHCRIO_IMAGE=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
 
           # Strip git ref prefix from version
           VERSION_FULL=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\)$,\1,')
@@ -107,9 +115,12 @@ jobs:
           [ ${{ github.ref }} == refs/pull/* ] && VERSION_FULL=pr-${{ github.event.number }}
 
           # Build all tags
-          TAGS="${DOCKER_IMAGE}:${VERSION_FULL}"
-          [ "$VERSION_FULL" != "edge" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_MINOR},${DOCKER_IMAGE}:${VERSION_MAJOR},${DOCKER_IMAGE}:latest"
-          [ "$VERSION_FULL" == "edge" ] && TAGS="$TAGS,${DOCKER_IMAGE}:${VERSION_FULL}-${COMMIT_REF_SHORT},${DOCKER_IMAGE}:${VERSION_FULL}-${COMMIT_REF}"
+          DOCKERIO_TAGS="${DOCKERIO_IMAGE}:${VERSION_FULL}"
+          [ "$VERSION_FULL" != "edge" ] && DOCKERIO_TAGS="$DOCKERIO_TAGS,${DOCKERIO_IMAGE}:${VERSION_MINOR},${DOCKERIO_IMAGE}:${VERSION_MAJOR},${DOCKERIO_IMAGE}:latest"
+          [ "$VERSION_FULL" == "edge" ] && DOCKERIO_TAGS="$TAGS,${DOCKERIO_IMAGE}:${VERSION_FULL}-${COMMIT_REF_SHORT},${DOCKERIO_IMAGE}:${VERSION_FULL}-${COMMIT_REF}"
+          GHCRIO_TAGS="${GHCRIO_IMAGE}:${VERSION_FULL}"
+          [ "$VERSION_FULL" != "edge" ] && GHCRIO_TAGS="$GHCRIO_TAGS,${GHCRIO_IMAGE}:${VERSION_MINOR},${GHCRIO_IMAGE}:${VERSION_MAJOR},${GHCRIO_IMAGE}:latest"
+          [ "$VERSION_FULL" == "edge" ] && GHCRIO_TAGS="$GHCRIO_TAGS,${GHCRIO_IMAGE}:${VERSION_FULL}-${COMMIT_REF_SHORT},${GHCRIO_IMAGE}:${VERSION_FULL}-${COMMIT_REF}"
 
           # Build tags for README.md
           [ "$VERSION_FULL" != "edge" ] && README_TAGS="\`latest\`, \`${VERSION_MAJOR}\`, \`${VERSION_MINOR}\`, \`${VERSION_FULL}\`"
@@ -133,7 +144,7 @@ jobs:
           [ "$VERSION_FULL" == "edge" ] && README_TAGS="\`${VERSION_FULL}\`, \`${VERSION_FULL}-${COMMIT_REF_SHORT}\`, \`${VERSION_FULL}-${COMMIT_REF}\`"
 
           echo "version=${VERSION_FULL}" >> $GITHUB_OUTPUT
-          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "tags=${DOCKERIO_TAGS},${GHCRIO_TAGS}" >> $GITHUB_OUTPUT
           echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "readme_tags=${README_TAGS}" >> $GITHUB_OUTPUT
           echo "release=${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags') }}" >> $GITHUB_OUTPUT
