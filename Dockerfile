@@ -102,7 +102,7 @@ RUN \
     pip3 install -r requirements.txt && \
   echo "Creating volume directories..." && \
     mv -v conf conf_template && \
-    mkdir -p conf _NSPOUT titles && \
+    mkdir -p conf _NSPOUT titles titledb && \
   echo "Cleaning up directories..." && \
     rm -rf .github windows_driver gui tests tests-gui images && \
     rm -f .coveragerc .editorconfig .gitignore .pep8 .pylintrc .pre-commit-config.yaml \
@@ -115,18 +115,14 @@ ARG TITLEDB_URL
 
 ENV UMASK=022 \
     FIX_OWNERSHIP=true \
-    TITLEDB_UPDATE=true \
-    TITLEDB_URL=${TITLEDB_URL} \
-    TITLEDB_REGION=US \
-    TITLEDB_LANGUAGE=en \
     PATH="/nut/venv/bin:$PATH" \
-    NUT_API_SCHEDULES='[{"scan": "0/30 * * * *"}]'
+    NUT_API_SCHEDULES='[{"scan": "0/30 * * * *"},{"updateDb": "22 0/6 * * *"}]'
 
 # Download S6 Overlay
 ADD ${S6_OVERLAY_RELEASE} /tmp/s6overlay.tar.gz
 
 # Copy wheels & crafty-web
-COPY --chown=1000 --from=builder /nut /nut
+COPY --chown=1000:1000 --from=builder /nut /nut
 
 # Change working dir
 WORKDIR /nut
@@ -159,7 +155,7 @@ RUN \
 COPY rootfs/ /
 
 # Define mountable directories
-VOLUME ["/nut/titles", "/nut/conf", "/nut/_NSPOUT", "/nut/titledb"]
+VOLUME ["/nut/titles", "/nut/conf", "/nut/_NSPOUT"]
 
 # Expose ports
 EXPOSE 9000
