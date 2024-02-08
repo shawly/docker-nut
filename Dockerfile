@@ -5,7 +5,7 @@
 #
 
 # Set python image version
-ARG PYTHON_VERSION=3.10-alpine3.15
+ARG PYTHON_VERSION=3.10-alpine3.19
 
 # Set vars for s6 overlay
 ARG S6_OVERLAY_VERSION=v2.2.0.3
@@ -69,7 +69,6 @@ RUN \
       git \
       build-base \
       libusb-dev \
-      libressl-dev \
       libffi-dev \
       curl-dev \
       jpeg-dev \
