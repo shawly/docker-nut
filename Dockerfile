@@ -5,7 +5,7 @@
 #
 
 # Set python image version
-ARG PYTHON_VERSION=3.10-alpine3.15
+ARG PYTHON_VERSION=3.10-alpine3.18
 
 # Set vars for s6 overlay
 ARG S6_OVERLAY_VERSION=v2.2.0.3
@@ -69,7 +69,6 @@ RUN \
       git \
       build-base \
       libusb-dev \
-      libressl-dev \
       libffi-dev \
       curl-dev \
       jpeg-dev \
@@ -94,12 +93,12 @@ RUN \
     sed -i '/qt-range-slider/d' requirements.txt && \
   echo "Fixing markupsafe issue..." && \
     echo "markupsafe==2.0.1" >> requirements.txt && \
-  echo "Upgrading pip..." && \
-    pip3 install --upgrade pip && \
   echo "Setup venv..." && \
     pip3 install virtualenv && \
     python3 -m venv venv && \
     source venv/bin/activate && \
+  echo "Upgrading pip..." && \
+    pip3 install --upgrade pip && \
   echo "Building wheels for requirements..." && \
     pip3 install -r requirements.txt && \
   echo "Creating volume directories..." && \

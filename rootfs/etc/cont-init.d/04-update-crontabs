@@ -37,7 +37,7 @@ if [[ "$EXECUTE_CRON" = "true" ]] && [[ -f "${USERS_CONF}" ]]; then
             schedule=$(echo "${row}" | jq -r 'to_entries|map("\(.value|tostring)")|.[]')
 
             echo "Found schedule for command ${cmd}: ${schedule}"
-            echo "${schedule} /usr/local/bin/nut-api -a \"${CRONTAB_USER}\" -c \"${cmd}\"" >/etc/crontabs/root
+            echo "${schedule} /usr/local/bin/nut-api -a \"${CRONTAB_USER}\" -c \"${cmd}\"" >> /etc/crontabs/root
             echo "Added ${cmd} schedule to /etc/crontabs/root..."
         done
     else
