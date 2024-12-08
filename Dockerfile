@@ -101,7 +101,7 @@ RUN \
     python3 -m venv venv && \
     source venv/bin/activate && \
   echo "Building wheels for requirements..." && \
-    pip3 install -r requirements.txt && \
+    pip3 install --only-binary -r requirements.txt && \
   echo "Creating volume directories..." && \
     mv -v conf conf_template && \
     mkdir -p conf _NSPOUT titles && \
