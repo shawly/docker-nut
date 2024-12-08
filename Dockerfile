@@ -69,7 +69,6 @@ RUN \
       git \
       build-base \
       libusb-dev \
-      libressl-dev \
       libffi-dev \
       curl-dev \
       jpeg-dev \
