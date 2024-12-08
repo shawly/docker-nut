@@ -88,20 +88,18 @@ RUN \
   echo "Extracting nut..." && \
     tar xzf /tmp/nut.tar.gz --strip-components=1 -C /nut && \
   echo "Upgrading pip..." && \
-    pip3 install --upgrade pip && \
+    pip install --upgrade pip && \
   echo "Removing pyqt5 from requirements.txt since we have no gui..." && \
     sed -i '/pyqt5/d' requirements.txt && \
     sed -i '/qt-range-slider/d' requirements.txt && \
   echo "Fixing markupsafe issue..." && \
     echo "markupsafe==2.0.1" >> requirements.txt && \
-  echo "Upgrading pip..." && \
-    pip3 install --upgrade pip && \
   echo "Setup venv..." && \
-    pip3 install virtualenv && \
+    pip install virtualenv && \
     python3 -m venv venv && \
     source venv/bin/activate && \
   echo "Building wheels for requirements..." && \
-    pip3 install --only-binary :all: -r requirements.txt && \
+    pip install -r requirements.txt && \
   echo "Creating volume directories..." && \
     mv -v conf conf_template && \
     mkdir -p conf _NSPOUT titles && \
