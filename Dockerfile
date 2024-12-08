@@ -98,6 +98,8 @@ RUN \
     pip install virtualenv && \
     python3 -m venv venv && \
     source venv/bin/activate && \
+  echo "Upgrading pip..." && \
+    pip install --upgrade pip && \
   echo "Building wheels for requirements..." && \
     pip install -r requirements.txt && \
   echo "Creating volume directories..." && \
