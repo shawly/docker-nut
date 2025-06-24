@@ -35,7 +35,7 @@ NUT by [blawar](https://github.com/blawar/nut).
 
 <!-- supported tags will be auto updated through workflows! -->
 
-- `edge`, `edge-5e88b67`, `edge-5e88b6766daf1bd9cd04222323ad2638d736ed42` <!-- edge tag -->
+- `edge`, `edge-e18ec4a`, `edge-e18ec4ac125cac8e91450113a91627adeded97f9` <!-- edge tag -->
 - `latest`, `v3`, `v3.4`, `v3.4.0` <!-- latest tag -->
 
 ## Image Variants
